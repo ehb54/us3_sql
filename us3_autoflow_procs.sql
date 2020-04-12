@@ -450,7 +450,7 @@ DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
                                        	     	p_runID    	INT,
-					  	p_filename      VARCHAR(80)  )
+					  	p_filename      VARCHAR(300)  )
   MODIFIES SQL DATA  
 
 BEGIN

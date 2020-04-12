@@ -105,7 +105,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   expAborted enum('NO', 'YES') NOT NULL,
   label varchar(80) NULL,
   gmpRun enum ('NO', 'YES') NOT	NULL,
-  filename varchar(80) NULL,
+  filename varchar(300) NULL,
   aprofileGUID varchar(80) NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB;
