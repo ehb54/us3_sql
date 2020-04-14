@@ -135,6 +135,7 @@ CREATE  TABLE IF NOT EXISTS instrument (
   opsys2 ENUM ('UV/visible', 'Rayleigh Interference', 'Fluorescense', '(not installed)') NOT NULL ,
   opsys3 ENUM ('UV/visible', 'Rayleigh Interference', 'Fluorescense', '(not installed)') NOT NULL ,
   RadCalWvl int(11) NULL ,
+  optimaPortMsg int(11) NULL,
   PRIMARY KEY (instrumentID) ,
   INDEX ndx_instrument_labID (labID ASC) ,
   CONSTRAINT fk_instrument_labID
