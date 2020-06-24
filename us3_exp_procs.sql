@@ -38,6 +38,7 @@ BEGIN
   AND    personID = @US3_ID;
 
   IF ( p_experimentID = 1 ) THEN    -- The magic ID that anyone can use temporarily
+    SET count_experiments = 1;
     SET count_permissions = 1;
   END IF;
 
