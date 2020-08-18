@@ -534,8 +534,7 @@ CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
 					      p_triplename TEXT,
 					      p_filename   TEXT,
 					      p_aprofileguid CHAR(36),
-					      p_json TEXT,
-					      p_final_stage TEXT  )
+					      p_json TEXT )
                                        
   RETURNS INT
   MODIFIES SQL DATA
@@ -554,9 +553,8 @@ BEGIN
       TripleName        = p_triplename,
       Filename          = p_filename,
       AprofileGUID      = p_aprofileguid,	
-      status_json       = p_json,
-      FinalStage        = p_final_stage;
-
+      status_json       = p_json;
+     
     SELECT LAST_INSERT_ID() INTO record_id;
 
   END IF;
