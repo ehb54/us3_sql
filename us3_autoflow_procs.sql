@@ -232,7 +232,7 @@ BEGIN
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
-	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID  
+	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs  
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -490,7 +490,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_edit_data$$
 CREATE PROCEDURE update_autoflow_at_edit_data ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT  )
+                                       	     	p_runID    	INT,
+						p_analysisIDs   TEXT  )
 					 
   MODIFIES SQL DATA  
 
@@ -513,7 +514,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflow
-      SET      status = 'ANALYSIS'
+      SET      status = 'ANALYSIS', analysisIDs = p_analysisIDs
       WHERE    runID = p_runID;
 
     END IF;
@@ -521,6 +522,89 @@ BEGIN
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+--- Create reacord in the autoflowAnalysis table ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflow_analysis_record$$
+CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
+                                      	      p_password   VARCHAR(80),
+					      p_triplename TEXT,
+					      p_filename   TEXT,
+					      p_aprofileguid CHAR(36),
+					      p_json TEXT,
+					      p_final_stage TEXT  )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO AutoflowAnalysis SET
+      TripleName        = p_triplename,
+      Filename          = p_filename,
+      AprofileGUID      = p_aprofileguid,	
+      status_json       = p_json,
+      FinalStage        = p_final_stage;
+
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+---- read AutoflowAnalysis record -------------------------------------------
+DROP PROCEDURE IF EXISTS read_autoflowAnalysis_record$$
+CREATE PROCEDURE read_autoflowAnalysis_record ( p_personGUID    CHAR(36),
+                                      	       	p_password      VARCHAR(80),
+                                       		p_requestID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       AutoflowAnalysis
+  WHERE      RequestID = p_requestID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   RequestID, TripleName, Cluster_default, Filename, AprofileGUID, CurrentGfacID, 
+      	       status_json, status, status_msg, create_time, update_time, create_user, update_user
+      FROM     AutoflowAnalysis 
+      WHERE    RequestID = p_requestID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
 
 END$$
 
