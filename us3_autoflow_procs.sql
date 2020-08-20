@@ -534,6 +534,7 @@ CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
 					      p_triplename TEXT,
 					      p_filename   TEXT,
 					      p_aprofileguid CHAR(36),
+					      p_invID    int(11),
 					      p_json TEXT )
                                        
   RETURNS INT
@@ -549,11 +550,12 @@ BEGIN
   SET @LAST_INSERT_ID = 0;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    INSERT INTO AutoflowAnalysis SET
-      TripleName        = p_triplename,
-      Filename          = p_filename,
-      AprofileGUID      = p_aprofileguid,	
-      status_json       = p_json;
+    INSERT INTO autoflowAnalysis SET
+      tripleName        = p_triplename,
+      filename          = p_filename,
+      aprofileGUID      = p_aprofileguid,
+      invID             = p_invID,	
+      statusJson        = p_json;
      
     SELECT LAST_INSERT_ID() INTO record_id;
 
@@ -579,8 +581,8 @@ BEGIN
 
   SELECT     COUNT(*)
   INTO       count_records
-  FROM       AutoflowAnalysis
-  WHERE      RequestID = p_requestID;
+  FROM       autoflowAnalysis
+  WHERE      requestID = p_requestID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -592,10 +594,10 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   RequestID, TripleName, Cluster_default, Filename, AprofileGUID, CurrentGfacID, 
-      	       status_json, status, status_msg, create_time, update_time, create_user, update_user
-      FROM     AutoflowAnalysis 
-      WHERE    RequestID = p_requestID;
+      SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID, 
+      	       statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
+      FROM     autoflowAnalysis 
+      WHERE    requestID = p_requestID;
 
     END IF;
 
