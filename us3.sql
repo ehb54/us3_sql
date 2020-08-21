@@ -111,6 +111,55 @@ CREATE  TABLE IF NOT EXISTS autoflow (
 ENGINE = InnoDB;
 
 
+-----------------------------------------------------                                                                                                                       
+ -- Table autoflowAnalysis -- 
+-----------------------------------------------------                                                                                                                       
+
+DROP TABLE IF EXISTS autoflowAnalysis;
+CREATE TABLE autoflowAnalysis (
+  requestID         int(11)      NOT NULL AUTO_INCREMENT,
+  tripleName        text         NOT NULL,
+  clusterDefault    text         ,
+  filename          text         NOT NULL,
+  aprofileGUID      char(36)     NOT NULL,
+  invID             int(11)      NOT NULL,
+  currentGfacID     varchar(80)  DEFAULT NULL,
+  statusJson        longtext     ,
+  status            text         ,
+  statusMsg         text         ,
+  createTime        timestamp    DEFAULT CURRENT_TIMESTAMP,
+  updateTime        timestamp    ,
+  createUser        varchar(128) ,
+  updateUser        varchar(128) ,
+
+  PRIMARY KEY (RequestID)
+  ) ENGINE=InnoDB;
+
+
+-----------------------------------------------------                                                                                                                       
+ -- Table autoflowAnalysisHistory -- 
+-----------------------------------------------------                                                                                                                       
+
+DROP TABLE IF EXISTS autoflowAnalysisHistory;
+CREATE TABLE autoflowAnalysisHistory (
+  requestID         int(11)      NOT NULL AUTO_INCREMENT,
+  tripleName        text         NOT NULL,
+  clusterDefault    text         ,
+  filename          text         NOT NULL,
+  aprofileGUID      char(36)     NOT NULL,
+  invID             int(11)      NOT NULL,
+  currentGfacID     varchar(80)  DEFAULT NULL,
+  statusJson        longtext     ,
+  status            text         ,
+  statusMsg         text         ,
+  createTime        timestamp    DEFAULT CURRENT_TIMESTAMP,
+  updateTime        timestamp    ,
+  createUser        varchar(128) ,
+  updateUser        varchar(128) ,
+
+  PRIMARY KEY (RequestID)
+  ) ENGINE=InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table instrument
