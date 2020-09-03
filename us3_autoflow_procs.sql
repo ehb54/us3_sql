@@ -609,6 +609,54 @@ BEGIN
 END$$
 
 
+-- Update autoflowAnalysis record with COMPLETE status and msg at FITMEN stage 
+DROP PROCEDURE IF EXISTS update_autoflow_analysis_record_at_fitmen$$
+CREATE PROCEDURE update_autoflow_analysis_record_at_fitmen ( p_personGUID  CHAR(36),
+                                             		   p_password      VARCHAR(80),
+                                       	     		   p_requestID     INT  )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE current_status TEXT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysis
+  WHERE      requestID = p_requestID;
+
+  SELECT     status
+  INTO       current_status
+  FROM	     autoflowAnalysis
+  WHERE	     requestID = p_requestID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+	IF ( current_status = 'WAIT') THEN	
+      	   UPDATE   autoflowAnalysis
+      	   SET      status = 'COMPLETE', statusMsg = 'The manual stage has been completed'
+      	   WHERE    requestID = p_requestID;
+	END IF;   
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 
 ----  get initial elapsed time upon reattachment ----------------------------- 
 DROP FUNCTION IF EXISTS read_autoflow_times$$
