@@ -594,8 +594,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID, 
-      	       statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
+      SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID,
+      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
       FROM     autoflowAnalysis 
       WHERE    requestID = p_requestID;
 
@@ -639,7 +639,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID, 
-      	       statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
+      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
       FROM     autoflowAnalysisHistory 
       WHERE    requestID = p_requestID;
 
