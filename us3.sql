@@ -83,7 +83,6 @@ ENGINE = InnoDB;
 -----------------------------------------------------
 -- Table autoflow--
 -----------------------------------------------------
-
 DROP TABLE IF EXISTS autoflow;
 
 CREATE  TABLE IF NOT EXISTS autoflow (
@@ -104,58 +103,59 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   corrRadii enum('YES', 'NO') NOT NULL,
   expAborted enum('NO', 'YES') NOT NULL,
   label varchar(80) NULL,
-  gmpRun enum ('NO', 'YES') NOT	NULL,
+  gmpRun enum ('NO', 'YES') NOT NULL,
   filename varchar(300) NULL,
   aprofileGUID varchar(80) NULL,
+  analysisIDs longtext NULL,
+
   PRIMARY KEY (ID) )
-ENGINE = InnoDB;
+  ENGINE = InnoDB;
 
-
------------------------------------------------------                                                                                                                       
- -- Table autoflowAnalysis -- 
------------------------------------------------------                                                                                                                       
-
+-----------------------------------------------------
+-- Table autoflowAnalysis -- 
+-----------------------------------------------------          
 DROP TABLE IF EXISTS autoflowAnalysis;
 CREATE TABLE autoflowAnalysis (
   requestID         int(11)      NOT NULL AUTO_INCREMENT,
   tripleName        text         NOT NULL,
-  clusterDefault    text         ,
+  clusterDefault    text         DEFAULT "localhost",
   filename          text         NOT NULL,
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
-  statusJson        longtext     ,
-  status            text         ,
-  statusMsg         text         ,
-  createTime        timestamp    DEFAULT CURRENT_TIMESTAMP,
-  updateTime        timestamp    ,
-  createUser        varchar(128) ,
-  updateUser        varchar(128) ,
+  statusJson        json,
+  status            text         DEFAULT "unknown",
+  statusMsg         text         DEFAULT "",
+  stageSubmitTime   timestamp    DEFAULT 0,
+  createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+  createUser        varchar(128) DEFAULT (current_user()),
+  updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
 
-
------------------------------------------------------                                                                                                                       
- -- Table autoflowAnalysisHistory -- 
------------------------------------------------------                                                                                                                       
+-----------------------------------------------------
+-- Table autoflowAnalysisHistory -- 
+-----------------------------------------------------            
 
 DROP TABLE IF EXISTS autoflowAnalysisHistory;
 CREATE TABLE autoflowAnalysisHistory (
-  requestID         int(11)      NOT NULL AUTO_INCREMENT,
+  requestID         int(11)      NOT NULL UNIQUE,
   tripleName        text         NOT NULL,
-  clusterDefault    text         ,
+  clusterDefault    text         DEFAULT "localhost",
   filename          text         NOT NULL,
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
-  statusJson        longtext     ,
-  status            text         ,
-  statusMsg         text         ,
-  createTime        timestamp    DEFAULT CURRENT_TIMESTAMP,
-  updateTime        timestamp    ,
-  createUser        varchar(128) ,
-  updateUser        varchar(128) ,
+  statusJson        json,
+  status            text         DEFAULT "unknown",
+  statusMsg         text         DEFAULT "",
+  stageSubmitTime   timestamp    DEFAULT 0,
+  createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+  createUser        varchar(128) DEFAULT (current_user()),
+  updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
