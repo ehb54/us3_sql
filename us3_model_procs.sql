@@ -442,6 +442,7 @@ BEGIN
 
 END$$
 
+
 -- Returns the modelID and description of all models associated with p_ID
 --  If p_ID = 0, retrieves information about all models in db
 --  Regular user can only get info about his own models
@@ -527,6 +528,103 @@ BEGIN
   END IF;
 
 END$$
+
+
+--  Returns the modelID and description of all models associated with p_ID and description
+--  If p_ID = 0, retrieves information about all models in db
+--  Regular user can only get info about his own models
+DROP PROCEDURE IF EXISTS get_model_desc_auto$$
+CREATE PROCEDURE get_model_desc_auto ( p_personGUID CHAR(36),
+                                     p_password VARCHAR(80),
+                                     p_ID       INT,
+				     p_description VARCHAR(200) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE desc_pattern VARCHAR(254);	
+  CALL config();
+  SET desc_pattern = CONCAT( p_description, '%2DSA-FM%' );
+  
+
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+    -- This is an admin; he can get more info
+    IF ( count_models( p_personGUID, p_password, p_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+  
+      IF ( p_ID > 0 ) THEN
+        SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+                 editGUID, m.editedDataID,
+                 timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
+        FROM     modelPerson, model m, editedData
+        WHERE    modelPerson.modelID = m.modelID
+        AND      m.editedDataID = editedData.editedDataID
+        AND      modelPerson.personID = p_ID
+	AND	 m.description LIKE desc_pattern
+        ORDER BY m.modelID DESC;
+   
+      ELSE
+        SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+                 editGUID, m.editedDataID,
+                 timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+                 MD5( xml ) AS checksum, LENGTH( xml ) AS size
+        FROM     modelPerson, model m, editedData
+        WHERE    modelPerson.modelID = m.modelID
+        AND      m.editedDataID = editedData.editedDataID
+	AND	 m.description LIKE desc_pattern
+        ORDER BY m.modelID DESC;
+
+      END IF;
+
+    END IF;
+
+  ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
+      -- Uh oh, can't do that
+      SET @US3_LAST_ERRNO = @NOTPERMITTED;
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this model';
+     
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( count_models( p_personGUID, p_password, @US3_ID ) < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+   
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      -- Ok, user wants his own info
+      SELECT @OK AS status;
+
+      SELECT   m.modelID, modelGUID, description, m.variance, m.meniscus,
+               editGUID, m.editedDataID,
+               timestamp2UTC( m.lastUpdated ) AS UTC_lastUpdated,
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size
+      FROM     modelPerson, model m, editedData
+      WHERE    modelPerson.modelID = m.modelID
+      AND      m.editedDataID = editedData.editedDataID
+      AND      modelPerson.personID = @US3_ID
+      AND      m.description LIKE desc_pattern
+      ORDER BY m.modelID DESC;
+      
+
+    END IF;
+
+  END IF;
+
+END$$
+
+
 
 -- Returns the modelID and description of all models associated with p_ID and editID
 --  Unlike get_model_desc, in this function p_ID cannot be 0
