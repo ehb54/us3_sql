@@ -1473,3 +1473,39 @@ SET @DEBUG = CONCAT('Edited data ID = ', p_editedDataID,
 
 END$$
 
+-- Get a list of editedData filenames and editedDataIDs that correspond with this label
+DROP PROCEDURE IF EXISTS get_editedDataFilenamesIDs$$
+CREATE PROCEDURE get_editedDataFilenamesIDs ( p_personGUID   CHAR(36),
+                                 	     p_password     VARCHAR(80),
+                                  	     p_label VARCHAR(80))
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_editedData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_editedData
+  FROM       editedData
+  WHERE      label = p_label;
+
+  
+  IF ( count_editedData = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT @OK AS status;
+
+    SELECT   filename, editedDataID
+    FROM     editedData
+    WHERE    label = p_label;
+
+  END IF;
+
+END$$
