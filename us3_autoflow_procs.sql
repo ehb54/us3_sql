@@ -686,11 +686,10 @@ BEGIN
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
     ELSE
-	IF ( current_status = 'WAIT') THEN	
-      	   UPDATE   autoflowAnalysis
-      	   SET      status = 'COMPLETE', statusMsg = 'The manual stage has been completed'
-      	   WHERE    requestID = p_requestID;
-	END IF;   
+      UPDATE   autoflowAnalysis
+      SET      nextWaitStatus = 'COMPLETE', nextWaitStatusMsg = 'The manual stage has been completed'
+      WHERE    requestID = p_requestID;
+	
 
     END IF;
 
