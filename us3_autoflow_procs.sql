@@ -595,7 +595,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID,
-      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
+      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser,
+               nextWaitStatus, nextWaitStatusMsg
       FROM     autoflowAnalysis 
       WHERE    requestID = p_requestID;
 
@@ -639,7 +640,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   requestID, tripleName, clusterDefault, filename, aprofileGUID, invID, currentGfacID, 
-      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser
+      	       currentHPCARID, statusJson, status, statusMsg, createTime, updateTime, createUser, updateUser,
+               nextWaitStatus, nextWaitStatusMsg
       FROM     autoflowAnalysisHistory 
       WHERE    requestID = p_requestID;
 
@@ -701,7 +703,7 @@ END$$
 
 
 
--- Update autoflowAnalysis record with COMPLETE or FAIL status and msg at DELETION 
+-- Update autoflowAnalysis record with CANCELED status and msg at DELETION of the primary channel wvl 
 DROP PROCEDURE IF EXISTS update_autoflow_analysis_record_at_deletion$$
 CREATE PROCEDURE update_autoflow_analysis_record_at_deletion ( p_personGUID  CHAR(36),
                                              		     p_password      VARCHAR(80),
@@ -735,6 +737,53 @@ BEGIN
     ELSE
       UPDATE   autoflowAnalysis
       SET      status = 'CANCELED', StatusMsg = 'Job has been scheduled for deletion'
+      WHERE    requestID = p_requestID;
+	
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+-- Update autoflowAnalysis record with CANCELED status and msg at DELETION of other wvl in a channel  
+DROP PROCEDURE IF EXISTS update_autoflow_analysis_record_at_deletion_other_wvl$$
+CREATE PROCEDURE update_autoflow_analysis_record_at_deletion_other_wvl ( p_personGUID  CHAR(36),
+                                             		               p_password      VARCHAR(80),
+                                       	     		               p_requestID     INT  )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE current_status TEXT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysis
+  WHERE      requestID = p_requestID;
+
+  SELECT     status
+  INTO       current_status
+  FROM	     autoflowAnalysis
+  WHERE	     requestID = p_requestID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowAnalysis
+      SET      nextWaitStatus = 'CANCELED', nextWaitStatusMsg = 'Job has been scheduled for deletion'
       WHERE    requestID = p_requestID;
 	
 
