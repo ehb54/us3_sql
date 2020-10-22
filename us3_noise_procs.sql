@@ -664,6 +664,44 @@ BEGIN
 
 END$$
 
+
+-- get noise ID, type by modelID
+DROP PROCEDURE IF EXISTS get_noiseTypesIDs$$
+CREATE PROCEDURE get_noiseTypesIDs ( p_personGUID  CHAR(36),
+                                  p_password    VARCHAR(80),
+                                  p_modelID     INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_noise INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_noise
+  FROM       noise
+  WHERE      modelID = p_modelID;
+
+  IF ( count_noise = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT @OK AS status;
+
+    SELECT   noiseID, noiseType, timeEntered
+    FROM     noise 
+    WHERE    modelID = p_modelID;
+
+  END IF;
+
+END$$
+
+
 -- DELETEs a noise file
 DROP PROCEDURE IF EXISTS delete_noise$$
 CREATE PROCEDURE delete_noise ( p_personGUID  CHAR(36),
