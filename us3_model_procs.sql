@@ -838,6 +838,44 @@ BEGIN
 
 END$$
 
+
+-- Get model descriptions for editedDataID
+DROP PROCEDURE IF EXISTS get_modelDescsIDs$$
+CREATE PROCEDURE get_modelDescsIDs ( p_personGUID  CHAR(36),
+                                  p_password  VARCHAR(80),
+                                  p_editID    INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_models INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_models
+  FROM       model
+  WHERE      editedDataID = p_editID;
+
+  IF ( count_models = 0 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+    SELECT @OK AS status;
+
+    SELECT   description, modelID, lastUpdated
+    FROM     model
+    WHERE    editedDataID = p_editID;
+    
+  END IF;
+
+END$$
+
+
 -- DELETEs a model, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_model$$
 CREATE PROCEDURE delete_model ( p_personGUID  CHAR(36),
