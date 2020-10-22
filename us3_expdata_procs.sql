@@ -1502,7 +1502,7 @@ BEGIN
   ELSE
     SELECT @OK AS status;
 
-    SELECT   filename, editedDataID
+    SELECT   filename, editedDataID, rawDataID, lastUpdated
     FROM     editedData
     WHERE    label = p_label;
 
