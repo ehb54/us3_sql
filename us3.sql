@@ -115,6 +115,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
 -- Table autoflowAnalysis -- 
 -----------------------------------------------------          
 DROP TABLE IF EXISTS autoflowAnalysis;
+
 CREATE TABLE autoflowAnalysis (
   requestID         int(11)      NOT NULL AUTO_INCREMENT,
   tripleName        text         NOT NULL,
@@ -123,9 +124,12 @@ CREATE TABLE autoflowAnalysis (
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
+  currentHPCARID    int(11)      DEFAULT NULL,
   statusJson        json,
   status            text         DEFAULT "unknown",
   statusMsg         text         DEFAULT "",
+  nextWaitStatus    text         DEFAULT NULL,
+  nextWaitStatusMsg text         DEFAULT NULL,
   stageSubmitTime   timestamp    DEFAULT 0,
   createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
@@ -134,12 +138,12 @@ CREATE TABLE autoflowAnalysis (
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
-
+                                          
 -----------------------------------------------------
 -- Table autoflowAnalysisHistory -- 
 -----------------------------------------------------            
-
 DROP TABLE IF EXISTS autoflowAnalysisHistory;
+                                          
 CREATE TABLE autoflowAnalysisHistory (
   requestID         int(11)      NOT NULL UNIQUE,
   tripleName        text         NOT NULL,
@@ -148,9 +152,12 @@ CREATE TABLE autoflowAnalysisHistory (
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
+  currentHPCARID    int(11)      DEFAULT NULL,
   statusJson        json,
   status            text         DEFAULT "unknown",
   statusMsg         text         DEFAULT "",
+  nextWaitStatus    text         DEFAULT NULL,
+  nextWaitStatusMsg text         DEFAULT NULL,
   stageSubmitTime   timestamp    DEFAULT 0,
   createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
@@ -159,7 +166,6 @@ CREATE TABLE autoflowAnalysisHistory (
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table instrument
