@@ -167,6 +167,35 @@ CREATE TABLE autoflowAnalysisHistory (
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
 
+
+-----------------------------------------------------
+-- Table autoflowAnalysisStages --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowStages;
+
+CREATE TABLE autoflowStages (
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  liveUpdate        text         DEFAULT "unknown",
+  import            text         DEFAULT "unknown",
+  editing           text         DEFAULT "unknown",
+
+  PRIMARY KEY (autoflowID)
+  ) ENGINE=InnoDB;
+
+
+-----------------------------------------------------
+-- Table autoflowAnalysisStages -- 
+-----------------------------------------------------            
+DROP TABLE IF EXISTS autoflowAnalysisStages;
+                                          
+CREATE TABLE autoflowAnalysisStages (
+  requestID         int(11)      NOT NULL UNIQUE,
+  analysisFitmen    text         DEFAULT "unknown",
+
+  PRIMARY KEY (requestID)
+  ) ENGINE=InnoDB;
+
+
 -- -----------------------------------------------------
 -- Table instrument
 -- -----------------------------------------------------

@@ -703,6 +703,95 @@ END$$
 
 
 
+
+
+-- New record in the autoflowAnalysisStages table ---
+DROP PROCEDURE IF EXISTS new_autoflow_analysis_stages_record$$
+CREATE PROCEDURE new_autoflow_analysis_stages_record ( p_personGUID CHAR(36),
+                                      	            p_password   VARCHAR(80),
+					            p_requestID  INT(11) )
+					                                                
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowAnalysisStages SET
+      requestID         = p_requestID;
+    
+  END IF;
+
+END$$
+
+
+
+
+-- Update and return status of the FITMEN while trying to update edit profiles ---
+DROP PROCEDURE IF EXISTS fitmen_autoflow_analysis_status$$
+CREATE PROCEDURE fitmen_autoflow_analysis_status ( p_personGUID CHAR(36),
+                                              p_password   VARCHAR(80),
+                                              p_requestID  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     analysisFitmen 
+  INTO       current_status
+  FROM       autoflowAnalysisStages
+  WHERE      requestID = p_requestID FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowAnalysisStages
+      SET     analysisFitmen = 'STARTED'
+      WHERE   requestID = p_requestID;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
+
+
+
+
+
 -- Update autoflowAnalysis record with CANCELED status and msg at DELETION of the primary channel wvl 
 DROP PROCEDURE IF EXISTS update_autoflow_analysis_record_at_deletion$$
 CREATE PROCEDURE update_autoflow_analysis_record_at_deletion ( p_personGUID  CHAR(36),
