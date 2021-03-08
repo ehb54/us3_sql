@@ -162,7 +162,7 @@ CREATE PROCEDURE delete_autoflow_record ( p_personGUID    CHAR(36),
 
 BEGIN
   DECLARE count_records INT;	
-	
+  
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
@@ -192,6 +192,7 @@ END$$
 
 
 
+
 -- DELETE  autoflow record by ID 
 DROP PROCEDURE IF EXISTS delete_autoflow_record_by_id$$
 CREATE PROCEDURE delete_autoflow_record_by_id ( p_personGUID    CHAR(36),
@@ -201,7 +202,8 @@ CREATE PROCEDURE delete_autoflow_record_by_id ( p_personGUID    CHAR(36),
 
 BEGIN
   DECLARE count_records INT;	
-	
+  DECLARE count_records_stages INT;	
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
@@ -213,6 +215,13 @@ BEGIN
     FROM autoflow 
     WHERE ID = p_ID;
 
+    -- Find out if record exists for associated pID 
+    SELECT COUNT(*) INTO count_records_stages 
+    FROM autoflowStages 
+    WHERE autoflowID = p_ID;
+
+
+
     IF ( count_records = 0 ) THEN
       SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
       SET @US3_LAST_ERROR = 'Record cannot be deleted as it does not exist for current experiment run';   
@@ -221,7 +230,49 @@ BEGIN
       DELETE FROM autoflow
       WHERE ID = p_ID;
     
-    END IF;  
+    END IF;
+
+    IF ( count_records_stages > 0 ) THEN
+       DELETE FROM autoflowStages
+       WHERE autoflowID = p_ID;
+
+    END IF;   
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+-- DELETE  autoflowStages record by ID 
+DROP PROCEDURE IF EXISTS delete_autoflow_stages_record$$
+CREATE PROCEDURE delete_autoflow_stages_record ( p_personGUID    CHAR(36),
+                                     	       p_password      VARCHAR(80),
+                			       p_ID            INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  
+  DECLARE count_records_stages INT;	
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    
+    -- Find out if record exists for associated pID 
+    SELECT COUNT(*) INTO count_records_stages 
+    FROM autoflowStages 
+    WHERE autoflowID = p_ID;
+
+    IF ( count_records_stages > 0 ) THEN
+       DELETE FROM autoflowStages
+       WHERE autoflowID = p_ID;
+
+    END IF;   
 
   END IF;
       
