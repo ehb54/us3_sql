@@ -122,6 +122,36 @@ BEGIN
 END$$
 
 
+-- adds autoflowStages record
+DROP PROCEDURE IF EXISTS add_autoflow_stages_record$$
+CREATE PROCEDURE add_autoflow_stages_record ( p_personGUID  CHAR(36),
+                                            p_password      VARCHAR(80),
+                                            p_id      INT )
+
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStages SET
+      autoflowID        = p_id;
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+
+
 
 -- DELETE  autoflow record ( when Optima run aborted manually )
 DROP PROCEDURE IF EXISTS delete_autoflow_record$$
@@ -727,6 +757,306 @@ BEGIN
   END IF;
 
 END$$
+
+
+
+-- Update and return status of the LIVE UPDATE while trying to switch to IMPORT ---
+DROP PROCEDURE IF EXISTS autoflow_liveupdate_status$$
+CREATE PROCEDURE autoflow_liveupdate_status ( p_personGUID CHAR(36),
+                                              p_password   VARCHAR(80),
+                                              p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     liveUpdate 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     liveUpdate = 'STARTED'
+      WHERE   autoflowID = p_id;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
+
+
+-- Revert liveUpdate status in autoflowStages record ---
+DROP PROCEDURE IF EXISTS autoflow_liveupdate_status_revert$$
+CREATE PROCEDURE autoflow_liveupdate_status_revert ( p_personGUID CHAR(36),
+                                                   p_password   VARCHAR(80),
+                                                   p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  -- DECLARE unique_start TINYINT DEFAULT 0;
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  
+  SELECT     liveUpdate 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status != 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     liveUpdate = DEFAULT
+      WHERE   autoflowID = p_id;
+
+    END IF;
+
+  END IF;
+
+  -- SELECT unique_start as status;
+  -- RETURN (unique_start);
+  
+END$$
+
+
+
+
+
+-- Update and return status of the IMPORT while trying to switch to EDITING ---
+DROP PROCEDURE IF EXISTS autoflow_import_status$$
+CREATE PROCEDURE autoflow_import_status ( p_personGUID CHAR(36),
+                                          p_password   VARCHAR(80),
+                                          p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     import 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     import = 'STARTED'
+      WHERE   autoflowID = p_id;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
+
+
+-- Revert IMPORT status in autoflowStages record ---
+DROP PROCEDURE IF EXISTS autoflow_import_status_revert$$
+CREATE PROCEDURE autoflow_import_status_revert ( p_personGUID CHAR(36),
+                                                 p_password   VARCHAR(80),
+                                                 p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  -- DECLARE unique_start TINYINT DEFAULT 0;
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  
+  SELECT     import 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status != 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     import = DEFAULT
+      WHERE   autoflowID = p_id;
+
+    END IF;
+
+  END IF;
+
+  -- SELECT unique_start as status;
+  -- RETURN (unique_start);
+  
+END$$
+
+
+
+-- Update and return status of the EDIT while trying to switch to ANALYSIS ---
+DROP PROCEDURE IF EXISTS autoflow_edit_status$$
+CREATE PROCEDURE autoflow_edit_status ( p_personGUID CHAR(36),
+                                        p_password   VARCHAR(80),
+                                        p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     editing 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     editing = 'STARTED'
+      WHERE   autoflowID = p_id;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
+
+
+-- Revert EDIT status in autoflowStages record ---
+DROP PROCEDURE IF EXISTS autoflow_edit_status_revert$$
+CREATE PROCEDURE autoflow_edit_status_revert ( p_personGUID CHAR(36),
+                                               p_password   VARCHAR(80),
+                                               p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  -- DECLARE unique_start TINYINT DEFAULT 0;
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  
+  SELECT     editing 
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status != 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     editing = DEFAULT
+      WHERE   autoflowID = p_id;
+
+    END IF;
+
+  END IF;
+
+  -- SELECT unique_start as status;
+  -- RETURN (unique_start);
+  
+END$$
+
+
+
+
 
 
 
