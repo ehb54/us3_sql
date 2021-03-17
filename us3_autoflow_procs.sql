@@ -1171,6 +1171,47 @@ END$$
 
 
 
+-- Revert FITMEN status in autoflowAnalysisStages record ---
+DROP PROCEDURE IF EXISTS fitmen_autoflow_analysis_status_revert$$
+CREATE PROCEDURE fitmen_autoflow_analysis_status_revert ( p_personGUID CHAR(36),
+                                                        p_password   VARCHAR(80),
+                                                        p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  -- DECLARE unique_start TINYINT DEFAULT 0;
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  
+  SELECT     analysisFitmen 
+  INTO       current_status
+  FROM       autoflowAnalysisStages
+  WHERE      requestID = p_id;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status != 'unknown' ) THEN
+      UPDATE  autoflowAnalysisStages
+      SET     analysisFitmen = DEFAULT
+      WHERE   requestID = p_id;
+
+    END IF;
+
+  END IF;
+
+  -- SELECT unique_start as status;
+  -- RETURN (unique_start);
+  
+END$$
+
+
+
+
 
 
 -- Update autoflowAnalysis record with CANCELED status and msg at DELETION of the primary channel wvl 
