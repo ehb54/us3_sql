@@ -1432,3 +1432,231 @@ BEGIN
 
 END$$
 
+
+-------------------------------------------------------------------------
+--- PROCS and FUNCTIONS related to report and reportItem tables
+-------------------------------------------------------------------------
+
+--- Create record in the report table ------------------------
+
+DROP FUNCTION IF EXISTS new_report$$
+CREATE FUNCTION new_report ( p_personGUID CHAR(36),
+                             p_password   VARCHAR(80),
+                             p_guid        varchar(80),
+			     p_channame    varchar(80),
+			     p_totconc     float,
+			     p_rmsdlim     float,
+			     p_avintensity float,
+                             p_expduration INT ,
+                             p_wvl         INT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE report_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowReport SET
+      reportGUID        = p_guid,
+      channelName       = p_channame,
+      totalConc         = p_totconc,
+      rmsdLimit         = p_rmsdlim,	
+      avIntensity       = p_avintensity,
+      expDuration       = p_expduration,
+      wavelength        = p_wvl;
+     
+    SELECT LAST_INSERT_ID() INTO report_id;
+
+  END IF;
+
+  RETURN( report_id );
+
+END$$
+
+
+
+--- Create record in the reportItem table ------------------------
+
+DROP FUNCTION IF EXISTS new_report_item$$
+CREATE FUNCTION new_report_item ( p_personGUID CHAR(36),
+                                p_password    VARCHAR(80),
+                                p_reportguid  varchar(80),
+			        p_reportid    int,
+			        p_type        text,
+			        p_method      text,
+			        p_low         float,
+                                p_hi          float,
+                                p_intval      float,
+                                p_tolerance   float,
+                                p_percent     float )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE reportitem_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowReportItem SET
+      reportGUID        = p_reportguid,
+      reportID          = p_reportid,
+      type              = p_type,
+      method            = p_method,
+      rangeLow          = p_low,	
+      rangeHi           = p_hi,
+      integration       = p_intval,
+      tolerance         = p_tolerance,
+      totalPercent      = p_percent;
+     
+    SELECT LAST_INSERT_ID() INTO reportitem_id;
+
+  END IF;
+
+  RETURN( reportitem_id );
+
+END$$
+
+
+
+----- Returns complete information about autoflowReport record by ID
+DROP PROCEDURE IF EXISTS get_report_info_by_id$$
+CREATE PROCEDURE get_report_info_by_id( p_personGUID    CHAR(36),
+                                       	p_password      VARCHAR(80),
+                                       	p_reportID      INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowReport
+  WHERE      reportID = p_reportID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength
+      FROM     autoflowReport 
+      WHERE    reportID = p_reportID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
+----- Returns list of autoflowReportItem IDs by parent report's ID
+DROP PROCEDURE IF EXISTS get_report_items_ids_by_report_id$$
+CREATE PROCEDURE get_report_items_ids_by_report_id( p_personGUID    CHAR(36),
+                                       	            p_password      VARCHAR(80),
+                                       	            p_reportID      INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowReport
+  WHERE      reportID = p_reportID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   reportItemID
+      FROM     autoflowReportItem 
+      WHERE    reportID = p_reportID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+----- Returns complete information about autoflowReportItem record by ID
+DROP PROCEDURE IF EXISTS get_report_item_info_by_id$$
+CREATE PROCEDURE get_report_item_info_by_id( p_personGUID    CHAR(36),
+                                       	     p_password      VARCHAR(80),
+                                       	     p_reportItemID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowReportItem
+  WHERE      reportItemID  = p_reportItemID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   type, method, rangeLow, rangeHi, integration, tolerance, totalPercent
+      FROM     autoflowReportItem 
+      WHERE    reportItemID = p_reportItemID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+

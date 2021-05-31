@@ -196,6 +196,46 @@ CREATE TABLE autoflowAnalysisStages (
   ) ENGINE=InnoDB;
 
 
+-----------------------------------------------------
+-- Table autoflowReport
+-----------------------------------------------------
+
+DROP TABLE IF EXISTS autoflowReport;
+
+CREATE  TABLE IF NOT EXISTS autoflowReport (
+  reportID      int(11) NOT NULL AUTO_INCREMENT ,
+  reportGUID    varchar(80) NULL,
+  channelName   varchar(80) NULL,
+  totalConc     FLOAT NULL,
+  rmsdLimit     FLOAT NULL,
+  avIntensity   FLOAT NULL,
+  expDuration   int(10) NULL,
+  wavelength    int(10) NULL,
+  PRIMARY KEY (reportID) )
+ENGINE = InnoDB;
+
+-----------------------------------------------------
+-- Table autoflowReportItem
+-----------------------------------------------------
+
+DROP TABLE IF EXISTS autoflowReportItem;
+
+CREATE  TABLE IF NOT EXISTS autoflowReportItem (
+  reportItemID  int(11) NOT NULL AUTO_INCREMENT ,
+  reportGUID    varchar(80) NOT NULL,
+  reportID      int(11) NOT NULL,
+  type          enum ('s', 'D', 'f', 'f/f0', 'MW') NOT NULL,
+  method        enum ('2DSA-IT', 'PCSA-SL/DS/IS', '2DSA-MC', 'raw') NOT NULL,
+  rangeLow      FLOAT NULL,
+  rangeHi       FLOAT NULL,
+  integration   FLOAT NULL,
+  tolerance     FLOAT NULL,
+  totalPercent  FLOAT NULL,
+  PRIMARY KEY (reportItemID) )
+ENGINE = InnoDB;
+
+
+
 -- -----------------------------------------------------
 -- Table instrument
 -- -----------------------------------------------------
