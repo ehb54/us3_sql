@@ -211,6 +211,7 @@ CREATE  TABLE IF NOT EXISTS autoflowReport (
   avIntensity   FLOAT NULL,
   expDuration   int(10) NULL,
   wavelength    int(10) NULL,
+  triplesDropped longtext DEFAULT 'none',
   PRIMARY KEY (reportID) )
 ENGINE = InnoDB;
 
