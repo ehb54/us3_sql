@@ -1624,32 +1624,47 @@ CREATE PROCEDURE get_report_items_ids_by_report_id( p_personGUID    CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_records INT;
+  DECLARE count_report_records INT;
+  DECLARE count_report_item_records INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   SELECT     COUNT(*)
-  INTO       count_records
+  INTO       count_report_records
   FROM       autoflowReport
   WHERE      reportID = p_reportID;
 
+  SELECT     COUNT(*)
+  INTO       count_report_item_records
+  FROM       autoflowReportItem
+  WHERE      reportID = p_reportID;
+
+
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    IF ( count_records = 0 ) THEN
+    IF ( count_report_records = 0 ) THEN
       SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
       SELECT @US3_LAST_ERRNO AS status;
 
     ELSE
-      SELECT @OK AS status;
+       IF ( count_report_item_records = 0 ) THEN
+          SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+          SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
-      SELECT   reportItemID
-      FROM     autoflowReportItem 
-      WHERE    reportID = p_reportID;
+          SELECT @US3_LAST_ERRNO AS status;
 
-    END IF;
+       ELSE
+          SELECT @OK AS status;
+
+          SELECT   reportItemID
+          FROM     autoflowReportItem 
+          WHERE    reportID = p_reportID;
+
+       END IF;
+    END IF;   
 
   ELSE
     SELECT @US3_LAST_ERRNO AS status;
