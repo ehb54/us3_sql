@@ -1218,6 +1218,7 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_analysis_record_at_deletion$$
 CREATE PROCEDURE update_autoflow_analysis_record_at_deletion ( p_personGUID  CHAR(36),
                                              		     p_password      VARCHAR(80),
+                                                             p_statusMsg     TEXT,
                                        	     		     p_requestID     INT  )
 					 
   MODIFIES SQL DATA  
@@ -1247,7 +1248,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflowAnalysis
-      SET      status = 'CANCELED', StatusMsg = 'Job has been scheduled for deletion'
+      SET      status = 'CANCELED', statusMsg = p_statusMsg
       WHERE    requestID = p_requestID;
 	
 
