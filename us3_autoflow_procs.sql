@@ -411,7 +411,7 @@ DROP PROCEDURE IF EXISTS update_autoflow_at_live_update$$
 CREATE PROCEDURE update_autoflow_at_live_update ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
                                        	     	p_runID    	 INT,
-					  	p_curDir        VARCHAR(80)  )
+					  	p_curDir        VARCHAR(300)  )
   MODIFIES SQL DATA  
 
 BEGIN
