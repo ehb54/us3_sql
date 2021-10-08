@@ -84,7 +84,7 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_duration      INT,
 				     p_runname       VARCHAR(80),
 				     p_expid         INT,
-				     p_optimaname    VARCHAR(80),
+				     p_optimaname    VARCHAR(300),
 				     p_invID         INT,
 				     p_label         VARCHAR(80),
 				     p_gmprun        VARCHAR(80),
@@ -157,7 +157,8 @@ END$$
 DROP PROCEDURE IF EXISTS delete_autoflow_record$$
 CREATE PROCEDURE delete_autoflow_record ( p_personGUID    CHAR(36),
                                      	p_password      VARCHAR(80),
-                			p_runID         INT )
+                			p_runID         INT,
+                                        p_optima        VARCHAR(300) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -172,7 +173,7 @@ BEGIN
     -- Find out if record exists for associated runID 
     SELECT COUNT(*) INTO count_records 
     FROM autoflow 
-    WHERE runID = p_runID;
+    WHERE runID = p_runID AND optimaName = p_optima;
 
     IF ( count_records = 0 ) THEN
       SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
@@ -180,7 +181,7 @@ BEGIN
 
     ELSE
       DELETE FROM autoflow
-      WHERE runID = p_runID;
+      WHERE runID = p_runID AND optimaName = p_optima;
     
     END IF;  
 
@@ -375,7 +376,8 @@ DROP PROCEDURE IF EXISTS update_autoflow_runid_starttime$$
 CREATE PROCEDURE update_autoflow_runid_starttime ( p_personGUID    CHAR(36),
                                          	 p_password      VARCHAR(80),
                                        	 	 p_expID    	 INT,
-					 	 p_runid    	 INT  )
+					 	 p_runid    	 INT,
+                                                 p_optima        VARCHAR(300) )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -388,14 +390,14 @@ BEGIN
   SELECT     runID
   INTO       curr_runid
   FROM       autoflow
-  WHERE      expID = p_expID;
+  WHERE      expID = p_expID AND optimaName = p_optima;
 
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( curr_runid IS NULL ) THEN
       UPDATE   autoflow
       SET      runID = p_runid, runStarted = NOW()
-      WHERE    expID = p_expID;
+      WHERE    expID = p_expID AND optimaName = p_optima;
 
     END IF;
 
@@ -411,7 +413,8 @@ DROP PROCEDURE IF EXISTS update_autoflow_at_live_update$$
 CREATE PROCEDURE update_autoflow_at_live_update ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
                                        	     	p_runID    	 INT,
-					  	p_curDir        VARCHAR(300)  )
+					  	p_curDir        VARCHAR(300),
+                                                p_optima        VARCHAR(300)  )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -424,7 +427,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -434,7 +437,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      dataPath = p_curDir, status = 'EDITING'
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -450,7 +453,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_radiicorr$$
 CREATE PROCEDURE update_autoflow_at_live_update_radiicorr ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	 INT )
+                                       	     	p_runID    	 INT,
+                                                p_optima         VARCHAR(300)   )
 					 
   MODIFIES SQL DATA  
 
@@ -464,7 +468,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -474,7 +478,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      corrRadii = 'NO'
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -490,7 +494,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_expaborted$$
 CREATE PROCEDURE update_autoflow_at_live_update_expaborted ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	 INT )
+                                       	     	p_runID    	 INT,
+                                                p_optima        VARCHAR(300) )
 					 
   MODIFIES SQL DATA  
 
@@ -504,7 +509,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -514,7 +519,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      expAborted = 'YES'
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -531,7 +536,8 @@ DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
                                        	     	p_runID    	INT,
-					  	p_filename      VARCHAR(300)  )
+					  	p_filename      VARCHAR(300),
+                                                p_optima        VARCHAR(300) )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -544,7 +550,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -554,7 +560,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      filename = p_filename, status = 'EDIT_DATA'
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -572,7 +578,8 @@ DROP PROCEDURE IF EXISTS update_autoflow_at_edit_data$$
 CREATE PROCEDURE update_autoflow_at_edit_data ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
                                        	     	p_runID    	INT,
-						p_analysisIDs   TEXT  )
+						p_analysisIDs   TEXT,
+                                                p_optima        VARCHAR(300) )
 					 
   MODIFIES SQL DATA  
 
@@ -586,7 +593,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -596,7 +603,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      status = 'ANALYSIS', analysisIDs = p_analysisIDs
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -611,7 +618,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_analysis$$
 CREATE PROCEDURE update_autoflow_at_analysis   ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT )
+                                       	     	p_runID    	INT,
+                                                p_optima        VARCHAR(300)  )
 					 
   MODIFIES SQL DATA  
 
@@ -625,7 +633,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -635,7 +643,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      status = 'REPORT'
-      WHERE    runID = p_runID;
+      WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
 
@@ -1388,7 +1396,8 @@ END$$
 DROP FUNCTION IF EXISTS read_autoflow_times_mod$$
 CREATE FUNCTION read_autoflow_times_mod ( p_personGUID CHAR(36),
                                        	p_password   VARCHAR(80), 
-				       	p_runID      INT )
+				       	p_runID      INT,
+                                        p_optima      VARCHAR(300) )
                                        
   RETURNS INT
   READS SQL DATA
@@ -1407,19 +1416,19 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
 
   SELECT     runStarted
   INTO       cur_runStarted
   FROM       autoflow
-  WHERE      runID = p_runID;
+  WHERE      runID = p_runID AND optimaName = p_optima;
   
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records > 0 ) THEN
       IF ( cur_runStarted IS NOT NULL ) THEN 
         	
 	SELECT TIMESTAMPDIFF( SECOND, runStarted, NOW() )
-	INTO l_sec_difference FROM autoflow WHERE runID = p_runID; 
+	INTO l_sec_difference FROM autoflow WHERE runID = p_runID AND optimaName = p_optima; 
 
       END IF;	
     END IF;
