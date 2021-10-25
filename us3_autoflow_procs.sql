@@ -1497,7 +1497,9 @@ CREATE FUNCTION new_report ( p_personGUID CHAR(36),
 			     p_rmsdlim     float,
 			     p_avintensity float,
                              p_expduration INT ,
-                             p_wvl         INT )
+                             p_wvl         INT ,
+                             p_totconc_tol float ,
+                             p_expduration_tol float )
                                        
   RETURNS INT
   MODIFIES SQL DATA
@@ -1519,7 +1521,9 @@ BEGIN
       rmsdLimit         = p_rmsdlim,	
       avIntensity       = p_avintensity,
       expDuration       = p_expduration,
-      wavelength        = p_wvl;
+      wavelength        = p_wvl,
+      totalConcTol      = p_totconc_tol,
+      expDurationTol    = p_expduration_tol;
      
     SELECT LAST_INSERT_ID() INTO report_id;
 
@@ -1650,7 +1654,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength
+      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength, totalConcTol, expDurationTol
       FROM     autoflowReport 
       WHERE    reportID = p_reportID;
 

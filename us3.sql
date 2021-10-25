@@ -207,9 +207,11 @@ CREATE  TABLE IF NOT EXISTS autoflowReport (
   reportGUID    varchar(80) NULL,
   channelName   varchar(80) NULL,
   totalConc     FLOAT NULL,
+  totalConcTol  FLOAT NULL,
   rmsdLimit     FLOAT NULL,
   avIntensity   FLOAT NULL,
   expDuration   int(10) NULL,
+  expDurationTol FLOAT NULL,
   wavelength    int(10) NULL,
   triplesDropped longtext DEFAULT 'none',
   PRIMARY KEY (reportID) )
