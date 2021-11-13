@@ -214,6 +214,7 @@ CREATE  TABLE IF NOT EXISTS autoflowReport (
   expDurationTol FLOAT NULL,
   wavelength    int(10) NULL,
   triplesDropped longtext DEFAULT 'none',
+  reportMaskJson json,
   PRIMARY KEY (reportID) )
 ENGINE = InnoDB;
 

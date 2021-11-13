@@ -1499,7 +1499,8 @@ CREATE FUNCTION new_report ( p_personGUID CHAR(36),
                              p_expduration INT ,
                              p_wvl         INT ,
                              p_totconc_tol float ,
-                             p_expduration_tol float )
+                             p_expduration_tol float,
+                             p_maskJson    TEXT)
                                        
   RETURNS INT
   MODIFIES SQL DATA
@@ -1523,7 +1524,8 @@ BEGIN
       expDuration       = p_expduration,
       wavelength        = p_wvl,
       totalConcTol      = p_totconc_tol,
-      expDurationTol    = p_expduration_tol;
+      expDurationTol    = p_expduration_tol,
+      reportMaskJson    = p_maskJson;
      
     SELECT LAST_INSERT_ID() INTO report_id;
 
@@ -1654,7 +1656,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength, totalConcTol, expDurationTol
+      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength, totalConcTol, expDurationTol, reportMaskJson
       FROM     autoflowReport 
       WHERE    reportID = p_reportID;
 
