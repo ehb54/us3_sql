@@ -38,7 +38,8 @@ CREATE PROCEDURE new_aprofile ( p_personGUID   CHAR(36),
                                 p_password     VARCHAR(80),
                                 p_aprofileGUID CHAR(36),
                                 p_name         VARCHAR(160),
-                                p_xml          LONGTEXT )
+                                p_xml          LONGTEXT,
+                                p_reportMask   LONGTEXT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -66,7 +67,8 @@ BEGIN
       aprofileGUID   = p_aprofileGUID,
       name           = p_name,
       xml            = p_xml,
-      dateUpdated    = NOW();
+      dateUpdated    = NOW(),
+      reportMask     = p_reportMask;
    
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
@@ -109,7 +111,7 @@ BEGIN
     SELECT @OK AS status;
   
     SELECT   aprofileID, aprofileGUID, name, xml,
-             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
+             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated, reportMask
     FROM     analysisprofile
     ORDER BY aprofileID DESC;
 
@@ -153,7 +155,7 @@ BEGIN
     SELECT @OK AS status;
 
     SELECT   aprofileID, name, xml,
-             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
+             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated, reportMask
     FROM     analysisprofile
     WHERE    aprofileGUID = p_aprofileGUID;
   END IF;
@@ -196,7 +198,7 @@ BEGIN
     SELECT @OK AS status;
 
     SELECT   aprofileGUID, name, xml,
-             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
+             timestamp2UTC( dateUpdated ) AS UTC_lastUpdated, reportMask
     FROM     analysisprofile
     WHERE    aprofileID = p_aprofileID;
   END IF;
