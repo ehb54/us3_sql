@@ -358,7 +358,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename  
       FROM     autoflow;
      
     END IF;
