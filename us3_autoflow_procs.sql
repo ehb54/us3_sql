@@ -1565,7 +1565,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflowReport
-      SET      triplesDropped = p_dropped
+      SET      tripleDropped = p_dropped
       WHERE    reportID = p_reportID;
 
     END IF;
