@@ -235,6 +235,7 @@ CREATE  TABLE IF NOT EXISTS autoflowReportItem (
   integration   FLOAT NULL,
   tolerance     FLOAT NULL,
   totalPercent  FLOAT NULL,
+  combinedPlot  TinyInt(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (reportItemID) )
 ENGINE = InnoDB;
 
