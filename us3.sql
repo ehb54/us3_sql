@@ -1995,6 +1995,7 @@ CREATE TABLE IF NOT EXISTS analysisprofile (
   xml LONGTEXT NOT NULL ,
   dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   reportMask json ,
+  combinedPlots json ,
   PRIMARY KEY (aprofileID) )
 ENGINE = InnoDB;
 
