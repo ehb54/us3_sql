@@ -314,7 +314,8 @@ BEGIN
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
-	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs  
+	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
+	       intensityID 
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -1806,3 +1807,46 @@ BEGIN
   RETURN( record_id );
 
 END$$
+
+-- Returns complete information about autoflow Intensity record
+DROP PROCEDURE IF EXISTS read_autoflow_intensity_record$$
+CREATE PROCEDURE read_autoflow_intensity_record ( p_personGUID    CHAR(36),
+                                       	          p_password      VARCHAR(80),
+                                       	          p_ID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowIntensity
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   intensityRI, intensityIP
+      FROM     autoflowIntensity 
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
