@@ -539,7 +539,7 @@ CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
                                                 p_runID         INT,
                                                 p_filename      VARCHAR(300),
                                                 p_optima        VARCHAR(300),
-                                                p_intensityID   int(11) )
+                                                p_intensityID   INT )
   MODIFIES SQL DATA
 
 BEGIN
