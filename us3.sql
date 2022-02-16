@@ -107,6 +107,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   filename varchar(300) NULL,
   aprofileGUID varchar(80) NULL,
   analysisIDs longtext NULL,
+  intensityID int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -193,6 +194,20 @@ CREATE TABLE autoflowAnalysisStages (
   analysisFitmen    text         DEFAULT "unknown",
 
   PRIMARY KEY (requestID)
+  ) ENGINE=InnoDB;
+
+-----------------------------------------------------
+-- Table autoflowIntensity --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowIntensity;
+
+CREATE TABLE autoflowIntensity (
+  ID                int(11)      NOT NULL AUTO_INCREMENT,
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  intensityRI       json,
+  intensityIP       json,
+  
+  PRIMARY KEY (ID)
   ) ENGINE=InnoDB;
 
 

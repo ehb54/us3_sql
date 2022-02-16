@@ -314,7 +314,8 @@ BEGIN
 
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
-	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs  
+	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
+	       intensityID 
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -534,11 +535,12 @@ END$$
 -- Update autoflow record with next stage && filename at EDITING (LIMS IMPORT)
 DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
-                                             	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT,
-					  	p_filename      VARCHAR(300),
-                                                p_optima        VARCHAR(300) )
-  MODIFIES SQL DATA  
+                                                p_password      VARCHAR(80),
+                                                p_runID         INT,
+                                                p_filename      VARCHAR(300),
+                                                p_optima        VARCHAR(300),
+                                                p_intensityID   INT )
+  MODIFIES SQL DATA
 
 BEGIN
   DECLARE count_records INT;
@@ -559,7 +561,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflow
-      SET      filename = p_filename, status = 'EDIT_DATA'
+      SET      filename = p_filename, status = 'EDIT_DATA', intensityID = p_intensityID
       WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
@@ -569,8 +571,6 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
-
-
 
 
 -- Update autoflow record with next stage at EDIT DATA (EDIT DATA to ANALYSIS)
@@ -1766,6 +1766,83 @@ BEGIN
 
     END IF;
  
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
+--- Create reacord in the autoflowIntensity table ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflow_intensity_record$$
+CREATE FUNCTION new_autoflow_intensity_record ( p_personGUID CHAR(36),
+                                      	      p_password   VARCHAR(80),
+					      p_autoflowID int(11),
+					      p_intensityJson TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowIntensity SET
+      autoflowID        = p_autoflowID,
+      intensityRI       = p_intensityJson;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+-- Returns complete information about autoflow Intensity record
+DROP PROCEDURE IF EXISTS read_autoflow_intensity_record$$
+CREATE PROCEDURE read_autoflow_intensity_record ( p_personGUID    CHAR(36),
+                                       	          p_password      VARCHAR(80),
+                                       	          p_ID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowIntensity
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   intensityRI, intensityIP
+      FROM     autoflowIntensity 
+      WHERE    ID = p_ID;
+
+    END IF;
+
   ELSE
     SELECT @US3_LAST_ERRNO AS status;
 
