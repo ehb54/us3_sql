@@ -121,6 +121,31 @@ BEGIN
 
 END$$
 
+-- adds autoflowHistory record
+DROP PROCEDURE IF EXISTS new_autoflow_history_record$$
+CREATE PROCEDURE new_autoflow_history_record ( p_personGUID  CHAR(36),
+                                     p_password      VARCHAR(80),
+                                     p_ID            INT )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowHistory SELECT * FROM autoflow WHERE ID = p_ID;
+    
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
 -- adds autoflowStages record
 DROP PROCEDURE IF EXISTS add_autoflow_stages_record$$
@@ -315,8 +340,55 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-	       intensityID 
+               intensityID
       FROM     autoflow 
+      WHERE    ID = p_autoflowID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
+-- Returns complete information about autoflowHistory record
+DROP PROCEDURE IF EXISTS read_autoflow_history_record$$
+CREATE PROCEDURE read_autoflow_history_record ( p_personGUID    CHAR(36),
+                                       	        p_password      VARCHAR(80),
+                                       	        p_autoflowID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowHistory
+  WHERE      ID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, 
+	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
+               intensityID
+      FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
     END IF;
@@ -370,6 +442,52 @@ BEGIN
   END IF;
 
 END$$
+
+
+
+-- Returns information about autoflowHistory records for listing
+DROP PROCEDURE IF EXISTS get_autoflow_history_desc$$
+CREATE PROCEDURE get_autoflow_history_desc ( p_personGUID    CHAR(36),
+                                       	     p_password      VARCHAR(80) )
+                                     
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowHistory;
+
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename  
+      FROM     autoflowHistory;
+     
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
 
 
 -- Update autoflow record with Optima's RunID (ONLY once, first time )
@@ -535,12 +653,12 @@ END$$
 -- Update autoflow record with next stage && filename at EDITING (LIMS IMPORT)
 DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
-                                                p_password      VARCHAR(80),
-                                                p_runID         INT,
-                                                p_filename      VARCHAR(300),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_runID    	INT,
+					  	p_filename      VARCHAR(300),
                                                 p_optima        VARCHAR(300),
                                                 p_intensityID   INT )
-  MODIFIES SQL DATA
+  MODIFIES SQL DATA  
 
 BEGIN
   DECLARE count_records INT;
@@ -571,6 +689,8 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
 
 
 -- Update autoflow record with next stage at EDIT DATA (EDIT DATA to ANALYSIS)
@@ -1773,8 +1893,6 @@ BEGIN
 
 END$$
 
-
-
 --- Create reacord in the autoflowIntensity table ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_intensity_record$$
@@ -1849,4 +1967,3 @@ BEGIN
   END IF;
 
 END$$
-
