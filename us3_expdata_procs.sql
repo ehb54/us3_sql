@@ -1502,7 +1502,7 @@ BEGIN
   ELSE
     SELECT @OK AS status;
 
-    SELECT   filename, editedDataID, rawDataID, lastUpdated
+    SELECT   filename, editedDataID, rawDataID, timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
     FROM     editedData
     WHERE    label = p_label;
 
