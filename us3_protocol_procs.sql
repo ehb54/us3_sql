@@ -381,3 +381,33 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+-- CHECKS if a protocol is required by GMP (autoflow, autoflowHistory tables)
+DROP FUNCTION IF EXISTS check_protocol_for_autoflow$$
+CREATE FUNCTION check_protocol_for_autoflow ( p_personGUID  CHAR(36),
+                                   	     p_password      VARCHAR(80),
+					     p_name          varchar(80) )
+  RETURNS INT
+  READS SQL DATA					      
+  
+BEGIN
+  DECLARE count_protocols   INT;
+  DECLARE count_protocols_h INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT COUNT(*) INTO count_protocols 
+  FROM autoflow 
+  WHERE protName = p_name;
+
+  SELECT COUNT(*) INTO count_protocols_h
+  FROM autoflowHistory
+  WHERE protName = p_name;
+
+
+  RETURN( count_protocols + count_protocols_h );
+
+END$$
