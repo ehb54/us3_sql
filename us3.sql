@@ -203,6 +203,19 @@ CREATE TABLE autoflowAnalysisHistory (
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
 
+-----------------------------------------------------
+-- Table autoflowModelsLink --
+-----------------------------------------------------
+
+DROP TABLE IF EXISTS autoflowModelsLink;
+
+CREATE  TABLE IF NOT EXISTS autoflowModelsLink (
+  autoflowAnalysisID int(11) NOT NULL UNIQUE,
+  modelsDesc   json,
+
+  PRIMARY KEY (autoflowAnalysisID) )
+  ENGINE = InnoDB;
+
 
 -----------------------------------------------------
 -- Table autoflowAnalysisStages --
