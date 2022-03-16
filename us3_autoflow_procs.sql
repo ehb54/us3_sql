@@ -783,7 +783,8 @@ CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
 					      p_filename   TEXT,
 					      p_aprofileguid CHAR(36),
 					      p_invID    int(11),
-					      p_json TEXT )
+					      p_json TEXT,
+					      p_autoflowID int(11) )
                                        
   RETURNS INT
   MODIFIES SQL DATA
@@ -803,7 +804,8 @@ BEGIN
       filename          = p_filename,
       aprofileGUID      = p_aprofileguid,
       invID             = p_invID,	
-      statusJson        = p_json;
+      statusJson        = p_json,
+      autoflowID        = p_autoflowID;
      
     SELECT LAST_INSERT_ID() INTO record_id;
 
