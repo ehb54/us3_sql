@@ -171,6 +171,7 @@ CREATE TABLE autoflowAnalysis (
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
   createUser        varchar(128) DEFAULT (current_user()),
   updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
+  autoflowID        int(11)      NOT NULL,
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
@@ -199,6 +200,7 @@ CREATE TABLE autoflowAnalysisHistory (
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
   createUser        varchar(128) DEFAULT (current_user()),
   updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
+  autoflowID        int(11)      NOT NULL,
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
@@ -212,6 +214,7 @@ DROP TABLE IF EXISTS autoflowModelsLink;
 CREATE  TABLE IF NOT EXISTS autoflowModelsLink (
   autoflowAnalysisID int(11) NOT NULL UNIQUE,
   modelsDesc   json,
+  autoflowID   int(11) NOT NULL,
 
   PRIMARY KEY (autoflowAnalysisID) )
   ENGINE = InnoDB;
