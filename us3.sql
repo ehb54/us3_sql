@@ -4,11 +4,11 @@ SET @OLD_SQL_MODE=@@SQL_MODE;
 
 SET UNIQUE_CHECKS = 0;
 SET FOREIGN_KEY_CHECKS=0;
-SET SQL_MODE='STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER';
+SET SQL_MODE='STRICT_TRANS_TABLES,STRICT_ALL_TABLES,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,MYSQL40';
 
 -- Uncomment the following lines to create and use us3 schema
--- CREATE SCHEMA IF NOT EXISTS us3 DEFAULT CHARACTER SET ascii COLLATE ascii_bin ;
--- USE us3;
+CREATE SCHEMA IF NOT EXISTS us3 DEFAULT CHARACTER SET ascii COLLATE ascii_bin ;
+USE us3;
 
 -- -----------------------------------------------------
 -- Table people
@@ -80,9 +80,9 @@ CREATE  TABLE IF NOT EXISTS lab (
 ENGINE = InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflow--
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflow;
 
 CREATE  TABLE IF NOT EXISTS autoflow (
@@ -112,93 +112,93 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysis -- 
------------------------------------------------------          
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowAnalysis;
 
 CREATE TABLE autoflowAnalysis (
   requestID         int(11)      NOT NULL AUTO_INCREMENT,
   tripleName        text         NOT NULL,
-  clusterDefault    text         DEFAULT "localhost",
+  clusterDefault    text         DEFAULT 'localhost',
   filename          text         NOT NULL,
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
   currentHPCARID    int(11)      DEFAULT NULL,
   statusJson        json,
-  status            text         DEFAULT "unknown",
-  statusMsg         text         DEFAULT "",
+  status            text         DEFAULT 'unknown',
+  statusMsg         text         DEFAULT '',
   nextWaitStatus    text         DEFAULT NULL,
   nextWaitStatusMsg text         DEFAULT NULL,
   stageSubmitTime   timestamp    DEFAULT 0,
   createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
   createUser        varchar(128) DEFAULT (current_user()),
-  updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
+  updateUser        varchar(128) DEFAULT '', # ON UPDATE (current_user()),
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
                                           
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisHistory -- 
------------------------------------------------------            
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowAnalysisHistory;
                                           
 CREATE TABLE autoflowAnalysisHistory (
   requestID         int(11)      NOT NULL UNIQUE,
   tripleName        text         NOT NULL,
-  clusterDefault    text         DEFAULT "localhost",
+  clusterDefault    text         DEFAULT 'localhost',
   filename          text         NOT NULL,
   aprofileGUID      char(36)     NOT NULL,
   invID             int(11)      NOT NULL,
   currentGfacID     varchar(80)  DEFAULT NULL,
   currentHPCARID    int(11)      DEFAULT NULL,
   statusJson        json,
-  status            text         DEFAULT "unknown",
-  statusMsg         text         DEFAULT "",
+  status            text         DEFAULT 'unknown',
+  statusMsg         text         DEFAULT '',
   nextWaitStatus    text         DEFAULT NULL,
   nextWaitStatusMsg text         DEFAULT NULL,
   stageSubmitTime   timestamp    DEFAULT 0,
   createTime        timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updateTime        timestamp    DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
   createUser        varchar(128) DEFAULT (current_user()),
-  updateUser        varchar(128) DEFAULT "", # ON UPDATE (current_user()),
+  updateUser        varchar(128) DEFAULT '', # ON UPDATE (current_user()),
 
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisStages --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowStages;
 
 CREATE TABLE autoflowStages (
   autoflowID        int(11)      NOT NULL UNIQUE,
-  liveUpdate        text         DEFAULT "unknown",
-  import            text         DEFAULT "unknown",
-  editing           text         DEFAULT "unknown",
+  liveUpdate        text         DEFAULT 'unknown',
+  import            text         DEFAULT 'unknown',
+  editing           text         DEFAULT 'unknown',
 
   PRIMARY KEY (autoflowID)
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisStages -- 
------------------------------------------------------            
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowAnalysisStages;
                                           
 CREATE TABLE autoflowAnalysisStages (
   requestID         int(11)      NOT NULL UNIQUE,
-  analysisFitmen    text         DEFAULT "unknown",
+  analysisFitmen    text         DEFAULT 'unknown',
 
   PRIMARY KEY (requestID)
   ) ENGINE=InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowIntensity --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowIntensity;
 
 CREATE TABLE autoflowIntensity (
@@ -211,9 +211,9 @@ CREATE TABLE autoflowIntensity (
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowReport
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowReport;
 
@@ -233,9 +233,9 @@ CREATE  TABLE IF NOT EXISTS autoflowReport (
   PRIMARY KEY (reportID) )
 ENGINE = InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowReportItem
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowReportItem;
 
@@ -875,6 +875,51 @@ CREATE  TABLE IF NOT EXISTS bufferPerson (
   CONSTRAINT fk_bufferPerson_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table cosedComponent
+-- Handle cosedComponentID in code, so they can be
+--  the same on multiple databases
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS cosedComponent ;
+
+CREATE  TABLE IF NOT EXISTS cosedComponent (
+  cosedComponentID int(11) NOT NULL UNIQUE ,
+  units VARCHAR(16) NOT NULL DEFAULT 'mM',
+  description TEXT NULL DEFAULT NULL ,
+  viscosity TEXT NULL DEFAULT NULL ,
+  density TEXT NULL DEFAULT NULL ,
+  c_range TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (cosedComponentID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table buffercosedLink
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS buffercosedLink ;
+
+CREATE  TABLE IF NOT EXISTS buffercosedLink (
+  bufferID int(11) NOT NULL ,
+  cosedComponentID int(11) NOT NULL ,
+  concentration FLOAT NULL ,
+  s_value DECIMAL(6) DEFAULT NULL,
+  d_value DECIMAL(6) DEFAULT NULL,
+  INDEX ndx_bufferLink_bufferID (bufferID ASC) ,
+  INDEX ndx_bufferLink_bufferComponentID (cosedComponentID ASC) ,
+  CONSTRAINT fk_buffercosedLink_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_buffercosedLink_cosedComponentID
+    FOREIGN KEY (cosedComponentID )
+    REFERENCES cosedComponent (cosedComponentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;

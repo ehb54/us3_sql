@@ -442,6 +442,9 @@ BEGIN
       DELETE FROM bufferLink
       WHERE bufferID = p_bufferID;
 
+      DELETE FROM buffercosedLink
+      WHERE bufferID = p_bufferID;
+
       DELETE FROM bufferPerson
       WHERE bufferID = p_bufferID;
 
@@ -501,6 +504,43 @@ BEGIN
 
 END$$
 
+-- SELECTs descriptions for all cosedimenting components
+DROP PROCEDURE IF EXISTS get_cosed_component_desc$$
+CREATE PROCEDURE get_cosed_component_desc ( p_personGUID CHAR(36),
+                                             p_password   VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_components INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_components
+    FROM      cosedComponent;
+
+    IF ( count_components = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT cosedComponentID, description
+      FROM cosedcomponent
+      ORDER BY description;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 -- Returns a more complete list of information about one buffer component
 DROP PROCEDURE IF EXISTS get_buffer_component_info$$
 CREATE PROCEDURE get_buffer_component_info ( p_personGUID  CHAR(36),
@@ -534,6 +574,48 @@ BEGIN
                gradientForming
       FROM     bufferComponent
       WHERE    bufferComponentID = p_componentID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- Returns a more complete list of information about one cosedimenting component
+DROP PROCEDURE IF EXISTS get_cosed_component_info$$
+CREATE PROCEDURE get_cosed_component_info ( p_personGUID  CHAR(36),
+                                             p_password    VARCHAR(80),
+                                             p_componentID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_components INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_components
+  FROM       cosedcomponent
+  WHERE      cosedComponentID = p_componentID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_components = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   units, description, viscosity, density, c_range
+      FROM     cosedcomponent
+      WHERE    cosedComponentID = p_componentID;
 
     END IF;
 
@@ -601,6 +683,68 @@ BEGIN
 
 END$$
 
+
+-- adds a new cosedimenting component from cosedComponent
+DROP PROCEDURE IF EXISTS add_cosed_component$$
+CREATE PROCEDURE add_cosed_component ( p_personGUID    CHAR(36),
+                                        p_password      VARCHAR(80),
+                                        p_bufferID      INT,
+                                        p_componentID   INT,
+                                        p_concentration FLOAT,
+                                        p_s_coeff       DECIMAL(6),
+                                        p_d_coeff       DECIMAL(6))
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_buffers    INT;
+  DECLARE count_components INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_buffers
+  FROM       buffer
+  WHERE      bufferID = p_bufferID;
+
+  SELECT     COUNT(*)
+  INTO       count_components
+  FROM       cosedcomponent
+  WHERE      cosedComponentID = p_componentID;
+
+  IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
+    IF ( count_buffers < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_BUFFER;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No buffer with ID ',
+                                   p_bufferID,
+                                   ' exists' );
+
+    ELSEIF ( count_components < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_COMPONENT;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No cosed component with ID ',
+                                   p_componentID,
+                                   ' exists' );
+
+    ELSE
+      INSERT INTO buffercosedlink SET
+        bufferID          = p_bufferID,
+        cosedComponentID  = p_componentID,
+        concentration     = p_concentration,
+        s_value           = p_s_coeff,
+        d_value           = p_d_coeff;
+
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 -- Returns information about all buffer components of a single buffer
 DROP PROCEDURE IF EXISTS get_buffer_components$$
 CREATE PROCEDURE get_buffer_components ( p_personGUID CHAR(36),
@@ -650,6 +794,56 @@ BEGIN
 
 END$$
 
+
+-- Returns information about all cosedimenting components of a single buffer
+DROP PROCEDURE IF EXISTS get_cosed_components$$
+CREATE PROCEDURE get_cosed_components ( p_personGUID CHAR(36),
+                                         p_password   VARCHAR(80),
+                                         p_bufferID   INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_components INT;
+  DECLARE is_private       TINYINT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     private
+  INTO       is_private
+  FROM       bufferPerson
+  WHERE      bufferID = p_bufferID;
+
+  -- Either the user needs access permissions or the buffer needs to be public
+  IF ( ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) ||
+       ( ( verify_user( p_personGUID, p_password ) = @OK ) && ! is_private ) ) THEN
+    SELECT    COUNT(*)
+    INTO      count_components
+    FROM      buffercosedlink
+    WHERE     bufferID = p_bufferID;
+
+    IF ( count_components = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   l.cosedComponentID, description, viscosity, density, concentration, s_value, d_value
+      FROM     buffercosedlink l, cosedcomponent c
+      WHERE    l.cosedComponentID = c.cosedComponentID
+      AND      l.bufferID = p_bufferID
+      ORDER BY description;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 -- DELETEs all components associated with a buffer
 DROP PROCEDURE IF EXISTS delete_buffer_components$$
 CREATE PROCEDURE delete_buffer_components ( p_personGUID CHAR(36),
@@ -664,6 +858,8 @@ BEGIN
 
   IF ( verify_buffer_permission( p_personGUID, p_password, p_bufferID ) = @OK ) THEN
     DELETE FROM bufferLink
+    WHERE bufferID = p_bufferID;
+    DELETE FROM buffercosedlink
     WHERE bufferID = p_bufferID;
 
   END IF;
