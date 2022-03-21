@@ -1969,3 +1969,49 @@ BEGIN
   END IF;
 
 END$$
+
+
+-- Returns JSON about models processed at 5. ANALYSIS 
+DROP PROCEDURE IF EXISTS get_modelAnalysisInfo$$
+CREATE PROCEDURE get_modelAnalysisInfo ( p_personGUID    CHAR(36),
+                                         p_password      VARCHAR(80),
+                                       	 p_triplename    TEXT,
+					 p_autoflowID    int(11) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE autoAnalID INT;
+  SET     autoAnalID = 0;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     requestID
+  INTO       autoAnalID
+  FROM       autoflowAnalysisHistory
+  WHERE      autoflowID = p_autoflowID AND tripleName = p_triplename;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( autoAnalID = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   modelsDesc
+      FROM     autoflowModelsLink
+      WHERE    autoflowAnalysisID = autoAnalID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+

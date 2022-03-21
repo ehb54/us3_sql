@@ -1477,7 +1477,8 @@ END$$
 DROP PROCEDURE IF EXISTS get_editedDataFilenamesIDs$$
 CREATE PROCEDURE get_editedDataFilenamesIDs ( p_personGUID   CHAR(36),
                                  	     p_password     VARCHAR(80),
-                                  	     p_label VARCHAR(80))
+                                  	     p_label VARCHAR(80),
+					     p_eID   INT(11) )
   READS SQL DATA
 
 BEGIN
@@ -1490,7 +1491,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_editedData
   FROM       editedData
-  WHERE      label = p_label;
+  WHERE      label = p_label AND editedDataID = p_eID;
 
   
   IF ( count_editedData = 0 ) THEN
@@ -1504,7 +1505,7 @@ BEGIN
 
     SELECT   filename, editedDataID, rawDataID, timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
     FROM     editedData
-    WHERE    label = p_label;
+    WHERE    label = p_label AND editedDataID = p_eID;
 
   END IF;
 
