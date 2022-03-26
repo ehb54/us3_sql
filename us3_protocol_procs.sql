@@ -270,7 +270,7 @@ BEGIN
                timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
       FROM     protocol p, protocolPerson
       WHERE    p.protocolID = protocolPerson.protocolID
-      AND      p.personID = @US3_ID
+      AND      protocolPerson.personID = @US3_ID
       ORDER BY p.protocolID DESC;
 
     END IF;
