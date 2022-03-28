@@ -908,8 +908,9 @@ CREATE  TABLE IF NOT EXISTS buffercosedLink (
   bufferID int(11) NOT NULL ,
   cosedComponentID int(11) NOT NULL ,
   concentration FLOAT NULL ,
-  s_value DECIMAL(6) DEFAULT NULL,
-  d_value DECIMAL(6) DEFAULT NULL,
+  s_value FLOAT DEFAULT NULL,
+  d_value FLOAT DEFAULT NULL,
+  overlaying TINYINT(1) NOT NULL DEFAULT 0,
   INDEX ndx_bufferLink_bufferID (bufferID ASC) ,
   INDEX ndx_bufferLink_bufferComponentID (cosedComponentID ASC) ,
   CONSTRAINT fk_buffercosedLink_bufferID
