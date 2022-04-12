@@ -2129,6 +2129,27 @@ CREATE TABLE extinctionProfile (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table referenceScan
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS referenceScan;
+CREATE TABLE IF NOT EXISTS referenceScan (
+  id INT(11) NOT NULL AUTO_INCREMENT,
+  instrumentID INT(11) NOT NULL,
+  personID INT(11) NOT NULL, 
+  type CHAR(2) NOT NULL,
+  exprimentIDs VARCHAR(250) NOT NULL,
+  referenceTime DATE NOT NULL,
+  nWavelength INT(11) NOT NULL,
+  nPoints INT(11) NOT NULL,
+  startWavelength DECIMAL(4, 1) NOT NULL,
+  stopWavelength DECIMAL(4, 1) NOT NULL,
+  data LONGBLOB NULL,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id) )
+ENGINE = InnoDB;
+
+
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
