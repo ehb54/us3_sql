@@ -9,10 +9,10 @@
 DELIMITER $$
 
 -- SELECTs information from the experiment table
-DROP PROCEDURE IF EXISTS get_info_for_reference_scan$$
-CREATE PROCEDURE get_info_for_reference_scan ( p_personGUID CHAR(36),
-                                               p_password   VARCHAR(80),
-                                               p_runID      VARCHAR(255) )
+DROP PROCEDURE IF EXISTS get_info_for_referenceScan$$
+CREATE PROCEDURE get_info_for_referenceScan ( p_personGUID CHAR(36),
+                                              p_password   VARCHAR(80),
+                                              p_runID      VARCHAR(255) )
   READS SQL DATA
 
 BEGIN
@@ -52,9 +52,9 @@ END$$
 
 
 -- SELECTs information of records from the referenceScan table
-DROP PROCEDURE IF EXISTS get_reference_scan_info$$
-CREATE PROCEDURE get_reference_scan_info ( p_personGUID CHAR(36),
-                                           p_password   VARCHAR(80) )
+DROP PROCEDURE IF EXISTS get_referenceScan_info$$
+CREATE PROCEDURE get_referenceScan_info ( p_personGUID CHAR(36),
+                                          p_password   VARCHAR(80) )
   READS SQL DATA
 
 BEGIN
@@ -77,7 +77,7 @@ BEGIN
 
     ELSE
       SELECT @OK AS status; 
-      SELECT id, instrumentID, personID, type, exprimentIDs,
+      SELECT ID, instrumentID, personID, type, experimentIDs,
              timestamp2UTC( referenceTime ) AS UTC_referenceTime,
              nWavelength, nPoints, startWavelength, stopWavelength, 
              data IS NULL AS null_data,
@@ -94,19 +94,19 @@ BEGIN
 END$$
 
 
--- INSERTs new record to the referenceScan table
-DROP PROCEDURE IF EXISTS new_referenceData$$
-CREATE PROCEDURE new_referenceData ( p_personGUID      CHAR(36),
-                                     p_password        VARCHAR(80),
-                                     p_instrumentID    INT,
-                                     p_personID        INT,
-                                     p_type            CHAR(2),
-                                     p_exprimentIDs    VARCHAR(250),
-                                     p_referenceTime   VARCHAR(20),
-                                     p_nWavelength     INT,
-                                     p_nPoints         INT,
-                                     p_startWavelength DECIMAL(4, 1),
-                                     p_stopWavelength  DECIMAL(4, 1))
+-- INSERTs a new record to the referenceScan table
+DROP PROCEDURE IF EXISTS new_referenceScanRecord$$
+CREATE PROCEDURE new_referenceScanRecord ( p_personGUID      CHAR(36),
+                                           p_password        VARCHAR(80),
+                                           p_instrumentID    INT,
+                                           p_personID        INT,
+                                           p_type            CHAR(2),
+                                           p_experimentIDs   VARCHAR(250),
+                                           p_referenceTime   VARCHAR(20),
+                                           p_nWavelength     INT,
+                                           p_nPoints         INT,
+                                           p_startWavelength DECIMAL(4, 1),
+                                           p_stopWavelength  DECIMAL(4, 1))
   MODIFIES SQL DATA
 
 BEGIN
@@ -132,7 +132,7 @@ BEGIN
       instrumentID    = p_instrumentID,
       personID        = p_personID, 
       type            = p_type,
-      exprimentIDs    = p_exprimentIDs,
+      experimentIDs    = p_experimentIDs,
       referenceTime   = DATE(p_referenceTime),
       nWavelength     = p_nWavelength,
       nPoints         = p_nPoints,
@@ -146,8 +146,8 @@ BEGIN
 
     ELSEIF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @DUPFIELD;
-      SET @US3_LAST_ERROR = CONCAT( "MySQL: The exprimentIDs ",
-                                    p_exprimentIDs,
+      SET @US3_LAST_ERROR = CONCAT( "MySQL: The experimentIDs ",
+                                    p_experimentIDs,
                                     " already exists in the referenceScan table" );
       
     ELSE
@@ -162,9 +162,9 @@ BEGIN
 END$$
 
 
--- UPDATEs a refData blob record from the referenceScan table
-DROP PROCEDURE IF EXISTS upload_referenceData$$
-CREATE PROCEDURE upload_referenceData ( p_personGUID   CHAR(36),
+-- UPDATEs the blob data of the referenceScan table
+DROP PROCEDURE IF EXISTS upload_referenceScanData$$
+CREATE PROCEDURE upload_referenceScanData ( p_personGUID   CHAR(36),
                                         p_password     VARCHAR(80),
                                         p_refDataID    INT,
                                         p_data         LONGBLOB,
@@ -197,7 +197,7 @@ BEGIN
     -- Only admin can add new data
     UPDATE referenceScan SET
       data           = p_data
-    WHERE  id = p_refDataID;
+    WHERE  ID = p_refDataID;
 
     IF ( not_found = 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_RAWDATA;
@@ -212,9 +212,9 @@ BEGIN
 END$$
 
 
--- SELECTs a refData blob record from the referenceScan table
-DROP PROCEDURE IF EXISTS download_referenceData$$
-CREATE PROCEDURE download_referenceData ( p_personGUID   CHAR(36),
+-- SELECTs the blob data of the referenceScan table
+DROP PROCEDURE IF EXISTS download_referenceScanData$$
+CREATE PROCEDURE download_referenceScanData ( p_personGUID   CHAR(36),
                                           p_password     VARCHAR(80),
                                           p_refDataID    INT )
   READS SQL DATA
@@ -230,7 +230,7 @@ BEGIN
   SELECT COUNT(*)
   INTO   l_count_refData
   FROM   referenceScan
-  WHERE  id = p_refDataID;
+  WHERE  ID = p_refDataID;
 
 SET @DEBUG = CONCAT('Reference Scan ID = ', p_refDataID,
                     'Count = ', l_count_refData );
@@ -253,7 +253,7 @@ SET @DEBUG = CONCAT('Reference Scan ID = ', p_refDataID,
 
     SELECT data, MD5( data )
     FROM   referenceScan
-    WHERE  id = p_refDataID;
+    WHERE  ID = p_refDataID;
 
   END IF;
 
@@ -261,10 +261,10 @@ END$$
 
 
 -- UPDATEs to clear a record from the referenceScan table
-DROP PROCEDURE IF EXISTS clear_referenceData$$
-CREATE PROCEDURE clear_referenceData ( p_personGUID   CHAR(36),
-                                       p_password     VARCHAR(80),
-                                       p_refDataID    INT )
+DROP PROCEDURE IF EXISTS clear_referenceScanRecord$$
+CREATE PROCEDURE clear_referenceScanRecord ( p_personGUID   CHAR(36),
+                                             p_password     VARCHAR(80),
+                                             p_refDataID    INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -278,7 +278,7 @@ BEGIN
   SELECT COUNT(*)
   INTO   l_count_refData
   FROM   referenceScan
-  WHERE  id = p_refDataID;
+  WHERE  ID = p_refDataID;
 
 SET @DEBUG = CONCAT('Reference Scan ID = ', p_refDataID,
                     'Count = ', l_count_refData );
@@ -300,14 +300,14 @@ SET @DEBUG = CONCAT('Reference Scan ID = ', p_refDataID,
     SELECT @OK AS status;
 
     UPDATE referenceScan SET
-      exprimentIDs    = "-1",
+      experimentIDs    = "-1",
       nWavelength     = 0,
       nPoints         = 0,
       startWavelength = 0,
       stopWavelength  = 0,
       data            = NULL,
       lastUpdated     = NOW()
-    WHERE id = p_refDataID;
+    WHERE ID = p_refDataID;
 
   END IF;
 
