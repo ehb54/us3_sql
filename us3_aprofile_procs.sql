@@ -40,7 +40,7 @@ CREATE PROCEDURE new_aprofile ( p_personGUID   CHAR(36),
                                 p_name         VARCHAR(160),
                                 p_xml          LONGTEXT,
                                 p_reportMask   LONGTEXT,
-				p_combPlots    LONGTEXT )
+                                p_combPlots    LONGTEXT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -71,7 +71,7 @@ BEGIN
       dateUpdated    = NOW(),
       reportMask     = p_reportMask,
       combinedPlots  = p_combPlots;	
-         
+
     IF ( duplicate_key = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTDUP;
       SET @US3_LAST_ERROR = "MySQL: Duplicate entry for aprofileGUID/name field(s)";
