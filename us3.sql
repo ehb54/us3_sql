@@ -2134,11 +2134,11 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS referenceScan;
 CREATE TABLE IF NOT EXISTS referenceScan (
-  id INT(11) NOT NULL AUTO_INCREMENT,
+  ID INT(11) NOT NULL AUTO_INCREMENT,
   instrumentID INT(11) NOT NULL,
   personID INT(11) NOT NULL, 
   type CHAR(2) NOT NULL,
-  exprimentIDs VARCHAR(250) NOT NULL,
+  experimentIDs VARCHAR(250) NOT NULL,
   referenceTime DATE NOT NULL,
   nWavelength INT(11) NOT NULL,
   nPoints INT(11) NOT NULL,
@@ -2146,7 +2146,7 @@ CREATE TABLE IF NOT EXISTS referenceScan (
   stopWavelength DECIMAL(4, 1) NOT NULL,
   data LONGBLOB NULL,
   lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id) )
+  PRIMARY KEY (ID) )
 ENGINE = InnoDB;
 
 
