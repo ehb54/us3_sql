@@ -535,6 +535,6 @@ SOURCE us3_eprofile_procs.sql
 SOURCE us3_protocol_procs.sql
 SOURCE us3_aprofile_procs.sql
 SOURCE us3_autoflow_procs.sql
-SOURCE us3_refscan_porcs.sql
+SOURCE us3_refscan_procs.sql
 
 DELIMITER ;
