@@ -108,6 +108,8 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   aprofileGUID varchar(80) NULL,
   analysisIDs longtext NULL,
   intensityID int(11) NULL,
+  operatorID  int(11) NULL,
+  statusID    int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -142,9 +144,34 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   aprofileGUID varchar(80) NULL,
   analysisIDs longtext NULL,
   intensityID int(11) NULL,
+  operatorID  int(11) NULL,
+  statusID    int(11) NULL,
+
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
+
+
+-----------------------------------------------------
+-- Table autoflowStatus --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowStatus;
+
+CREATE TABLE autoflowStatus (
+  ID                int(11)      NOT NULL AUTO_INCREMENT,
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  importRI          json,
+  importRIts        timestamp    NULL,
+  importIP          json,
+  importIPts        timestamp    NULL,
+  editRI            json,
+  editRIts          timestamp    NULL,
+  editIP            json,
+  editIPts          timestamp    NULL,
+
+
+  PRIMARY KEY (ID) )
+  ENGINE=InnoDB;
 
 
 -----------------------------------------------------

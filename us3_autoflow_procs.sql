@@ -88,7 +88,8 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_invID         INT,
 				     p_label         VARCHAR(80),
 				     p_gmprun        VARCHAR(80),
-				     p_aprofileguid  VARCHAR(80) )
+				     p_aprofileguid  VARCHAR(80),
+                                     p_operatorID    INT )
                                     
   MODIFIES SQL DATA
 
@@ -111,7 +112,8 @@ BEGIN
       label		= p_label,
       created           = NOW(),
       gmpRun            = p_gmprun,
-      aprofileGUID      = p_aprofileguid;
+      aprofileGUID      = p_aprofileguid,
+      operatorID        = p_operatorID;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
@@ -404,7 +406,7 @@ END$$
 -- Returns information about autoflow records for listing
 DROP PROCEDURE IF EXISTS get_autoflow_desc$$
 CREATE PROCEDURE get_autoflow_desc ( p_personGUID    CHAR(36),
-                                       	p_password      VARCHAR(80) )
+                                     p_password      VARCHAR(80) )
                                      
   READS SQL DATA
 
@@ -431,7 +433,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID  
       FROM     autoflow;
      
     END IF;
