@@ -659,7 +659,8 @@ CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
                                        	     	p_runID    	INT,
 					  	p_filename      VARCHAR(300),
                                                 p_optima        VARCHAR(300),
-                                                p_intensityID   INT )
+                                                p_intensityID   INT,
+						p_statusID      INT )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -681,7 +682,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflow
-      SET      filename = p_filename, status = 'EDIT_DATA', intensityID = p_intensityID
+      SET      filename = p_filename, status = 'EDIT_DATA', intensityID = p_intensityID, statusID = p_statusID
       WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
@@ -2016,4 +2017,194 @@ BEGIN
   END IF;
 
 END$$
+
+
+--- Get ID of the autoflowStatus record by autoflowID -----------------------------
+
+DROP FUNCTION IF EXISTS get_autoflowStatus_id$$
+CREATE FUNCTION get_autoflowStatus_id ( p_personGUID CHAR(36),
+                                        p_password   VARCHAR(80),
+					p_autoflowID int(11) )
+                                       
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+  DECLARE count_records INT;
+
+  CALL config();
+  SET  record_id = 0;
+  SET  count_records = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      autoflowID = p_autoflowID;
+       
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      SELECT    ID
+      INTO      record_id
+      FROM      autoflowStatus
+      WHERE     autoflowID = p_autoflowID;
+
+    END IF;
+      
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+--- Create record in the autoflowStatus table via importRI ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusRI_record$$
+CREATE FUNCTION new_autoflowStatusRI_record ( p_personGUID CHAR(36),
+                                      	      p_password   VARCHAR(80),
+					      p_autoflowID int(11),
+					      p_RIJson TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      importRI          = p_RIJson,
+      importRIts        = NOW();
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+--- Create record in the autoflowStatus table via importIP ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusIP_record$$
+CREATE FUNCTION new_autoflowStatusIP_record ( p_personGUID CHAR(36),
+                                      	      p_password   VARCHAR(80),
+					      p_autoflowID int(11),
+					      p_IPJson TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      importIP          = p_IPJson,
+      importIPts        = NOW();
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+-- Update autoflowStatus record via importRI
+DROP PROCEDURE IF EXISTS update_autoflowStatusRI_record$$
+CREATE PROCEDURE update_autoflowStatusRI_record ( p_personGUID    CHAR(36),
+                                             	  p_password      VARCHAR(80),
+                                       	     	  p_ID    	  INT,
+					  	  p_autoflowID    INT,
+                                                  p_RIJson        TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      importRI  = p_RIJson, importRIts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Update autoflowStatus record via importIP
+DROP PROCEDURE IF EXISTS update_autoflowStatusIP_record$$
+CREATE PROCEDURE update_autoflowStatusIP_record ( p_personGUID    CHAR(36),
+                                             	  p_password      VARCHAR(80),
+                                       	     	  p_ID    	  INT,
+					  	  p_autoflowID    INT,
+                                                  p_IPJson        TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      importIP  = p_IPJson, importIPts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
