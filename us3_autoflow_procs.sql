@@ -342,7 +342,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID
+               intensityID, statusID
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -2197,6 +2197,86 @@ BEGIN
     ELSE
       UPDATE   autoflowStatus
       SET      importIP  = p_IPJson, importIPts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Update autoflowStatus record via editIR
+DROP PROCEDURE IF EXISTS update_autoflowStatusEditRI_record$$
+CREATE PROCEDURE update_autoflowStatusEditRI_record ( p_personGUID    CHAR(36),
+                                             	      p_password      VARCHAR(80),
+                                       	     	      p_ID    	      INT,
+					  	      p_autoflowID    INT,
+                                                      p_RIJson        TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      editRI  = p_RIJson, editRIts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Update autoflowStatus record via editIP
+DROP PROCEDURE IF EXISTS update_autoflowStatusEditIP_record$$
+CREATE PROCEDURE update_autoflowStatusEditIP_record ( p_personGUID    CHAR(36),
+                                             	      p_password      VARCHAR(80),
+                                       	     	      p_ID    	      INT,
+					  	      p_autoflowID    INT,
+                                                      p_IPJson        TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      editIP  = p_IPJson, editIPts = NOW()
       WHERE    ID = p_ID AND autoflowID = p_autoflowID;
 
     END IF;
