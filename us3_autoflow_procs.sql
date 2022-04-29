@@ -389,7 +389,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID
+               intensityID, statusID
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
