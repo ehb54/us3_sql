@@ -2287,4 +2287,46 @@ BEGIN
 
 END$$
 
+-- Returns complete information about autoflowStatus record
+DROP PROCEDURE IF EXISTS read_autoflow_status_record$$
+CREATE PROCEDURE read_autoflow_status_record ( p_personGUID    CHAR(36),
+                                       	       p_password      VARCHAR(80),
+                                       	       p_ID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   importRI, importRIts, importIP, importIPts,
+               editRI, editRIts, editIP, editIPts
+      FROM     autoflowStatus 
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
 
