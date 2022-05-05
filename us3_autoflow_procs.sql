@@ -967,13 +967,26 @@ CREATE PROCEDURE new_autoflow_analysis_stages_record ( p_personGUID CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_records INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisStages
+  WHERE      requestID = p_requestID;
+
+
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      DELETE FROM autoflowAnalysisStages
+      WHERE requestID = p_requestID;
+
+    END IF;
+
     INSERT INTO autoflowAnalysisStages SET
       requestID         = p_requestID;
     
