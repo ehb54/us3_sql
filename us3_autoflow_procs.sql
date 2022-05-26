@@ -2343,3 +2343,93 @@ BEGIN
 
 END$$
 
+-- Set AUTO_INCREMENT in autolfow to greater of:
+-- current autoflow AUTO_INCREMENT
+-- max( ID ) of autoflowHistory
+DROP PROCEDURE IF EXISTS set_autoflow_auto_increment$$
+CREATE PROCEDURE set_autoflow_auto_increment ( p_personGUID CHAR(36),
+                                               p_password   VARCHAR(80),
+                                               p_current_db VARCHAR(255) )
+
+-- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET @db_name            = p_current_db;
+
+  START TRANSACTION;
+
+  SELECT @autoinc := `AUTO_INCREMENT` FROM  INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = @db_name AND TABLE_NAME = 'autoflow' FOR UPDATE;
+  SELECT @new_autoinc := GREATEST( MAX( ID ) + 1, @autoinc ) FROM autoflowHistory;
+  SET @sql = CONCAT('ALTER TABLE autoflow AUTO_INCREMENT = ', @new_autoinc);
+  PREPARE st FROM @sql;
+  EXECUTE st;     
+
+  SELECT @new_autoinc AS status;  
+
+  COMMIT;
+
+END$$
+
+
+-- Set AUTO_INCREMENT in autolfowAnalysis to greater of:
+-- current autoflowAnalysis AUTO_INCREMENT
+-- max( requestID ) of autoflowAnalysisHistory
+DROP PROCEDURE IF EXISTS set_autoflowAnalysis_auto_increment$$
+CREATE PROCEDURE set_autoflowAnalysis_auto_increment ( p_personGUID CHAR(36),
+                                                       p_password   VARCHAR(80),
+                                                       p_current_db VARCHAR(255) )
+
+-- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET @db_name            = p_current_db;
+
+  START TRANSACTION;
+
+  SELECT @autoinc := `AUTO_INCREMENT` FROM  INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = @db_name AND TABLE_NAME = 'autoflowAnalysis' FOR UPDATE;
+  SELECT @new_autoinc := GREATEST( MAX( requestID ) + 1, @autoinc ) FROM autoflowAnalysisHistory;
+  SET @sql = CONCAT('ALTER TABLE autoflowAnalysis AUTO_INCREMENT = ', @new_autoinc);
+  PREPARE st FROM @sql;
+  EXECUTE st;     
+
+  SELECT @new_autoinc AS status;  
+
+  COMMIT;
+
+END$$
