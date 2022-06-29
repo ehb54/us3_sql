@@ -168,7 +168,7 @@ CREATE TABLE autoflowStatus (
   editRIts          timestamp    NULL,
   editIP            json,
   editIPts          timestamp    NULL,
-
+  analysis          json,
 
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;

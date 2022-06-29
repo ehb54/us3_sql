@@ -956,8 +956,6 @@ END$$
 
 
 
-
-
 -- New record in the autoflowAnalysisStages table ---
 DROP PROCEDURE IF EXISTS new_autoflow_analysis_stages_record$$
 CREATE PROCEDURE new_autoflow_analysis_stages_record ( p_personGUID CHAR(36),
@@ -993,7 +991,6 @@ BEGIN
   END IF;
 
 END$$
-
 
 
 -- Update and return status of the LIVE UPDATE while trying to switch to IMPORT ---
@@ -2300,6 +2297,65 @@ BEGIN
 
 END$$
 
+
+
+-- Update autoflowStatus record via analysis FITMEN
+DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisFitmen_record$$
+CREATE PROCEDURE update_autoflowStatusAnalysisFitmen_record ( p_personGUID    CHAR(36),
+                                             	            p_password      VARCHAR(80),
+                                       	     	            p_ID    	      INT,
+					  	            p_autoflowID      INT,
+                                                            p_AnalysisJson    TEXT,
+                                                            p_AnalysisTriple  TEXT,
+                                                            p_AnalysisAction  TEXT )
+
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE analysis_json TEXT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  SELECT     analysis
+  INTO       analysis_json
+  FROM       autoflowStatus
+  WHERE     ID = p_ID AND autoflowID = p_autoflowID; 
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      IF ( analysis_json IS NULL ) THEN 
+        UPDATE   autoflowStatus
+        SET      analysis  = p_AnalysisJson
+        WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+      ELSE
+         UPDATE  autoflowStatus
+         SET     analysis = JSON_ARRAY_APPEND(analysis, '$', JSON_OBJECT(p_AnalysisTriple, p_AnalysisAction))
+         WHERE   ID = p_ID AND autoflowID = p_autoflowID;
+
+      END IF;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- Returns complete information about autoflowStatus record
 DROP PROCEDURE IF EXISTS read_autoflow_status_record$$
 CREATE PROCEDURE read_autoflow_status_record ( p_personGUID    CHAR(36),
@@ -2330,7 +2386,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   importRI, importRIts, importIP, importIPts,
-               editRI, editRIts, editIP, editIPts
+               editRI, editRIts, editIP, editIPts, analysis
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
@@ -2342,6 +2398,7 @@ BEGIN
   END IF;
 
 END$$
+
 
 -- Set AUTO_INCREMENT in autolfow to greater of:
 -- current autoflow AUTO_INCREMENT
