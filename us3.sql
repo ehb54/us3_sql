@@ -110,6 +110,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   intensityID int(11) NULL,
   operatorID  int(11) NULL,
   statusID    int(11) NULL,
+  failedID    int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -146,10 +147,26 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   intensityID int(11) NULL,
   operatorID  int(11) NULL,
   statusID    int(11) NULL,
-
+  failedID    int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
+
+
+-----------------------------------------------------
+-- Table autoflowFailed --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowFailed;
+
+CREATE TABLE autoflowFailed (
+  ID                int(11)      NOT NULL AUTO_INCREMENT,
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  failedStage       text,
+  failedMsg         json,
+  failedTs          timestamp    NULL,
+
+  PRIMARY KEY (ID)
+  ) ENGINE=InnoDB;
 
 
 -----------------------------------------------------

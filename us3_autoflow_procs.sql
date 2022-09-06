@@ -342,7 +342,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID
+               intensityID, statusID, failedID
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -389,7 +389,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID
+               intensityID, statusID, failedID
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
@@ -1984,6 +1984,7 @@ BEGIN
 END$$
 
 
+
 -- Returns JSON about models processed at 5. ANALYSIS 
 DROP PROCEDURE IF EXISTS get_modelAnalysisInfo$$
 CREATE PROCEDURE get_modelAnalysisInfo ( p_personGUID    CHAR(36),
@@ -2488,5 +2489,304 @@ BEGIN
   SELECT @new_autoinc AS status;  
 
   COMMIT;
+
+END$$
+
+
+--------------------------------------------------------------------------------------------------------------
+---- stored procs related to autoflowFailed table, clearing autolfow fields, and exp./rawData-----------------
+--------------------------------------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS new_autoflow_failed_record$$
+CREATE FUNCTION new_autoflow_failed_record  ( p_personGUID CHAR(36),
+                                      	      p_password   VARCHAR(80),
+					      p_autoflowID int(11),
+					      p_stage      TEXT,
+					      p_failedmsg  TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowFailed SET
+      autoflowID        = p_autoflowID,
+      failedStage       = p_stage,
+      failedMsg         = p_failedmsg,
+      failedTs          = NOW();
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+-- Returns complete information about autoflow Failed record
+DROP PROCEDURE IF EXISTS read_autoflow_failed_record$$
+CREATE PROCEDURE read_autoflow_failed_record    ( p_personGUID    CHAR(36),
+                                       	          p_password      VARCHAR(80),
+                                       	          p_ID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowFailed
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   failedStage, failedMsg, failedTs
+      FROM     autoflowFailed
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
+-- Revert autoflowStages record fields to DEFAULT -------------------------------------
+DROP PROCEDURE IF EXISTS autoflow_stages_revert$$
+CREATE PROCEDURE autoflow_stages_revert ( p_personGUID CHAR(36),
+                                          p_password   VARCHAR(80),
+                                          p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    UPDATE  autoflowStages
+    SET   liveUpdate = DEFAULT,
+    	  import     = DEFAULT,
+	  editing    = DEFAULT
+    WHERE   autoflowID = p_id;
+
+  END IF;
+
+END$$
+
+
+
+-- Delete autoflowIntensity record ------------------------------------------------------
+DROP PROCEDURE IF EXISTS delete_autoflow_intensity_record$$
+CREATE PROCEDURE delete_autoflow_intensity_record ( p_personGUID    CHAR(36),
+                                     	            p_password      VARCHAR(80),
+						    p_autoflowID    INT,
+                			       	    p_ID            INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  
+  DECLARE count_records INT;	
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    
+    -- Find out if record exists for associated pID 
+    SELECT COUNT(*) INTO count_records 
+    FROM autoflowIntensity
+    WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    IF ( count_records > 0 ) THEN
+       DELETE FROM autoflowIntensity
+       WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;   
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Delete autoflowStatus record ---------------------------------------------------------
+DROP PROCEDURE IF EXISTS delete_autoflow_status_record$$
+CREATE PROCEDURE delete_autoflow_status_record ( p_personGUID    CHAR(36),
+                                     	         p_password      VARCHAR(80),
+						 p_autoflowID    INT,
+                			       	 p_ID            INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  
+  DECLARE count_records INT;	
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    
+    -- Find out if record exists for associated pID 
+    SELECT COUNT(*) INTO count_records 
+    FROM autoflowStatus
+    WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    IF ( count_records > 0 ) THEN
+       DELETE FROM autoflowStatus
+       WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;   
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Delete autoflowFailed record ---------------------------------------------------------
+DROP PROCEDURE IF EXISTS delete_autoflow_failed_record$$
+CREATE PROCEDURE delete_autoflow_failed_record ( p_personGUID    CHAR(36),
+                                     	         p_password      VARCHAR(80),
+						 p_autoflowID    INT,
+                			       	 p_ID            INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  
+  DECLARE count_records INT;	
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    
+    -- Find out if record exists for associated pID 
+    SELECT COUNT(*) INTO count_records 
+    FROM autoflowFailed
+    WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    IF ( count_records > 0 ) THEN
+       DELETE FROM autoflowFailed
+       WHERE ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;   
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Clean certain field in autoflow record when re-initializing from 2. LIVE_UPDATE ------
+DROP PROCEDURE IF EXISTS update_autoflow_at_reset_live_update$$
+CREATE PROCEDURE update_autoflow_at_reset_live_update ( p_personGUID    CHAR(36),
+                                             	      p_password      VARCHAR(80),
+                                       	     	      p_ID    	 INT  )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      dataPath    = DEFAULT,
+      	       filename    = DEFAULT,
+	       analysisIDs = DEFAULT,
+	       intensityID = DEFAULT,
+	       statusID    = DEFAULT,
+	       failedID    = DEFAULT,
+      	       status = 'LIVE_UPDATE'
+	       	      
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Delete record from autoflowHistory table if any ------
+DROP PROCEDURE IF EXISTS delete_autoflow_history_record$$
+CREATE PROCEDURE delete_autoflow_history_record ( p_personGUID    CHAR(36),
+                                             	  p_password      VARCHAR(80),
+                                       	     	  p_ID    	 INT  )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowHistory
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      DELETE FROM  autoflowHistory WHERE ID = p_ID;
+      
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
 
 END$$
