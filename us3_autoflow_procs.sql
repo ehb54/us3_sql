@@ -2531,6 +2531,46 @@ BEGIN
 
 END$$
 
+
+-- Update autoflow's "failedID" with the new autoflowFailed ID
+DROP PROCEDURE IF EXISTS update_autoflow_failedID$$
+CREATE PROCEDURE update_autoflow_failedID     ( p_personGUID    CHAR(36),
+                                             	p_password      VARCHAR(80),
+                                       	     	p_ID            INT,
+					  	p_failedID      INT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      failedID = p_failedID
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- Returns complete information about autoflow Failed record
 DROP PROCEDURE IF EXISTS read_autoflow_failed_record$$
 CREATE PROCEDURE read_autoflow_failed_record    ( p_personGUID    CHAR(36),
@@ -2702,6 +2742,8 @@ BEGIN
        DELETE FROM autoflowFailed
        WHERE ID = p_ID AND autoflowID = p_autoflowID;
 
+       UPDATE autoflow SET failedID = DEFAULT WHERE ID = p_autoflowID;
+       
     END IF;   
 
   END IF;
