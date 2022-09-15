@@ -2832,3 +2832,76 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+-- Delete autoflowAnalysisHistory records for given autoflowID --
+DROP PROCEDURE IF EXISTS delete_autoflow_analysis_history_records_by_autoflowID$$
+CREATE PROCEDURE delete_autoflow_analysis_history_records_by_autoflowID ( p_personGUID    CHAR(36),
+                                             	  			p_password      VARCHAR(80),
+                                       	     	  			p_autoflowID     INT  )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisHistory
+  WHERE      autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      DELETE FROM  autoflowAnalysisHistory WHERE autoflowID = p_autoflowID;
+      
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Delete autoflowModelsLink records for given autoflowID  --
+DROP PROCEDURE IF EXISTS delete_autoflow_model_links_records_by_autoflowID$$
+CREATE PROCEDURE  delete_autoflow_model_links_records_by_autoflowID( p_personGUID    CHAR(36),
+                                             	  		     p_password      VARCHAR(80),
+                                       	     	  		     p_autoflowID     INT  )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowModelsLink
+  WHERE      autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      DELETE FROM  autoflowModelsLink WHERE autoflowID = p_autoflowID;
+      
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
