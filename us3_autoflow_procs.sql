@@ -2743,7 +2743,6 @@ BEGIN
        WHERE ID = p_ID AND autoflowID = p_autoflowID;
 
        UPDATE autoflow SET failedID = DEFAULT WHERE ID = p_autoflowID;
-       
     END IF;   
 
   END IF;
@@ -2833,7 +2832,6 @@ BEGIN
 
 END$$
 
-
 -- Delete autoflowAnalysisHistory records for given autoflowID --
 DROP PROCEDURE IF EXISTS delete_autoflow_analysis_history_records_by_autoflowID$$
 CREATE PROCEDURE delete_autoflow_analysis_history_records_by_autoflowID ( p_personGUID    CHAR(36),
@@ -2903,5 +2901,3 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
-
-
