@@ -1474,7 +1474,7 @@ SET @DEBUG = CONCAT('Edited data ID = ', p_editedDataID,
 END$$
 
 -- Get a list of editedData filenames and editedDataIDs that correspond with this label
-DROP PROCEDURE IF EXISTS get_editedDataFilenamesID_forReports$$
+DROP PROCEDURE IF EXISTS get_editedDataFilenamesID_forReport$$
 CREATE PROCEDURE get_editedDataFilenamesIDs_forReport ( p_personGUID   CHAR(36),
                                  	      	       p_password     VARCHAR(80),
                                   	     	       p_label VARCHAR(80),
