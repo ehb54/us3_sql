@@ -2901,3 +2901,46 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+-- set_table_auto_increment procedure --
+DROP PROCEDURE IF EXISTS set_table_auto_increment$$
+CREATE PROCEDURE  set_table_auto_increment( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_current_db VARCHAR(255) )
+    MODIFIES SQL DATA
+
+BEGIN
+  DECLARE max_id_table_history INT DEFAULT 0;
+  DECLARE max_id_table         INT DEFAULT 0;
+  DECLARE table_auto_increment INT DEFAULT 0;
+  DECLARE greatest_value       INT DEFAULT 0;
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET @db_name            = p_current_db;
+
+  START TRANSACTION;
+
+  SELECT @autoinc := `AUTO_INCREMENT` FROM  INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = @db_name AND TABLE_NAME = 'autoflow';
+  SELECT @new_autoinc := GREATEST( MAX( ID ) + 1, @autoinc ) FROM autoflowHistory;
+  SET @sql = CONCAT('ALTER TABLE autoflow AUTO_INCREMENT = ', @new_autoinc);
+  PREPARE st FROM @sql;
+  EXECUTE st;     
+  
+  COMMIT;
+
+END$$
