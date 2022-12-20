@@ -111,6 +111,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   operatorID  int(11) NULL,
   statusID    int(11) NULL,
   failedID    int(11) NULL,
+  devRecord   enum('NO', 'YES') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -148,6 +149,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   operatorID  int(11) NULL,
   statusID    int(11) NULL,
   failedID    int(11) NULL,
+  devRecord   enum('NO', 'YES') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;

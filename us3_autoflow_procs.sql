@@ -32,7 +32,36 @@ BEGIN
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_records
-    FROM      autoflow;
+    FROM      autoflow
+    WHERE     devRecord = "NO";
+    
+  END IF;
+
+  RETURN( count_records );
+
+END$$
+
+-- Returns the count of autoflow DEV records in db
+DROP FUNCTION IF EXISTS count_autoflow_dev_records$$
+CREATE FUNCTION count_autoflow_dev_records ( p_personGUID CHAR(36),
+                                   	     p_password   VARCHAR(80) )
+                                       
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_records INT;
+
+  CALL config();
+  SET count_records = 0;
+
+       
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_records
+    FROM      autoflow
+    WHERE     devRecord = "YES";
     
   END IF;
 
@@ -355,8 +384,6 @@ BEGIN
 
 END$$
 
-
-
 -- Returns complete information about autoflowHistory record
 DROP PROCEDURE IF EXISTS read_autoflow_history_record$$
 CREATE PROCEDURE read_autoflow_history_record ( p_personGUID    CHAR(36),
@@ -419,7 +446,8 @@ BEGIN
 
   SELECT     COUNT(*)
   INTO       count_records
-  FROM       autoflow;
+  FROM       autoflow
+  WHERE      devRecord = "NO";
 
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
@@ -434,7 +462,52 @@ BEGIN
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID  
-      FROM     autoflow;
+      FROM     autoflow
+      WHERE    devRecord = "NO";
+     
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- Returns information about autoflow DEV records for listing
+DROP PROCEDURE IF EXISTS get_autoflow_dev_desc$$
+CREATE PROCEDURE get_autoflow_dev_desc ( p_personGUID    CHAR(36),
+                                         p_password      VARCHAR(80) )
+                                     
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      devRecord = "YES";
+
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID  
+      FROM     autoflow
+      WHERE    devRecords = "YES";
      
     END IF;
 
@@ -477,7 +550,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID   
       FROM     autoflowHistory;
      
     END IF;
@@ -2899,5 +2972,48 @@ BEGIN
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- set_table_auto_increment procedure --
+DROP PROCEDURE IF EXISTS set_table_auto_increment$$
+CREATE PROCEDURE  set_table_auto_increment( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_current_db VARCHAR(255) )
+    MODIFIES SQL DATA
+
+BEGIN
+  DECLARE max_id_table_history INT DEFAULT 0;
+  DECLARE max_id_table         INT DEFAULT 0;
+  DECLARE table_auto_increment INT DEFAULT 0;
+  DECLARE greatest_value       INT DEFAULT 0;
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET @db_name            = p_current_db;
+
+  START TRANSACTION;
+
+  SELECT @autoinc := `AUTO_INCREMENT` FROM  INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = @db_name AND TABLE_NAME = 'autoflow';
+  SELECT @new_autoinc := GREATEST( MAX( ID ) + 1, @autoinc ) FROM autoflowHistory;
+  SET @sql = CONCAT('ALTER TABLE autoflow AUTO_INCREMENT = ', @new_autoinc);
+  PREPARE st FROM @sql;
+  EXECUTE st;     
+  
+  COMMIT;
 
 END$$
