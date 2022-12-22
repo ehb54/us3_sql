@@ -152,6 +152,70 @@ BEGIN
 
 END$$
 
+
+-- adds autoflow record for ProtDev
+DROP PROCEDURE IF EXISTS add_autoflow_record_dev$$
+CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
+                                     	 p_password      VARCHAR(80),
+                                     	 p_protname      VARCHAR(80),
+                                     	 p_cellchnum     VARCHAR(80),
+                                     	 p_triplenum     VARCHAR(80),
+				     	 p_duration      INT,
+				     	 p_runname       VARCHAR(80),
+				     	 p_expid         INT,
+					 p_runID         INT,
+					 p_dataPath      VARCHAR(300),
+					 p_optimaname    VARCHAR(300),
+					 p_runStarted    TEXT,
+					 p_invID         INT,
+					 p_correctRadii  TEXT,
+					 p_aborted       TEXT,
+					 p_label         VARCHAR(80),
+					 p_filename      VARCHAR(300),
+				     	 p_aprofileguid  VARCHAR(80),
+					 p_operatorID    INT )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflow SET
+      protname          = p_protname,
+      cellChNum         = p_cellchnum,
+      tripleNum         = p_triplenum,
+      duration          = p_duration,
+      runName           = p_runname,
+      expID             = p_expid,
+      runID             = p_runID,
+      status            = 'EDIT_DATA',
+      dataPath          = p_dataPath,
+      optimaName        = p_optimaname,
+      runStarted        = p_runStarted,
+      invID             = p_invID,
+      created           = NOW(),
+      corrRadii         = p_correctRadii,
+      expAborted        = p_aborted,
+      label		= p_label,
+      gmpRun            = 'NO',
+      filename          = p_filename,
+      aprofileGUID      = p_aprofileguid,
+      operatorID        = p_operatorID,
+      devRecord         = 'YES';
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- adds autoflowHistory record
 DROP PROCEDURE IF EXISTS new_autoflow_history_record$$
 CREATE PROCEDURE new_autoflow_history_record ( p_personGUID  CHAR(36),
@@ -507,7 +571,7 @@ BEGIN
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID  
       FROM     autoflow
-      WHERE    devRecords = "YES";
+      WHERE    devRecord = "YES";
      
     END IF;
 
