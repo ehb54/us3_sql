@@ -2206,6 +2206,116 @@ BEGIN
 
 END$$
 
+
+--- Create record in the autoflowStatus table via importRI && importIP for ProtDEv module ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusRI_IP_dev_record$$
+CREATE FUNCTION new_autoflowStatusRI_IP_dev_record ( p_personGUID CHAR(36),
+                                      	      	   p_password   VARCHAR(80),
+					      	   p_autoflowID int(11),
+					      	   p_RIJson TEXT,
+						   p_RIts   TEXT,
+						   p_IPJson TEXT,
+						   p_IPts   TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      importRI          = p_RIJson,
+      importRIts        = p_RIts,
+      importIP          = p_IPJson,
+      importIPts        = p_IPts;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+--- Create record in the autoflowStatus table via importRI for ProtDEv module ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusRI_dev_record$$
+CREATE FUNCTION new_autoflowStatusRI_dev_record ( p_personGUID CHAR(36),
+                                      	      	   p_password   VARCHAR(80),
+					      	   p_autoflowID int(11),
+					      	   p_RIJson TEXT,
+						   p_RIts   TEXT)
+						                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      importRI          = p_RIJson,
+      importRIts        = p_RIts;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+--- Create record in the autoflowStatus table via importIP for ProtDEv module ------------------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusIP_dev_record$$
+CREATE FUNCTION new_autoflowStatusIP_dev_record ( p_personGUID CHAR(36),
+                                      	      	   p_password   VARCHAR(80),
+					      	   p_autoflowID int(11),
+					      	   p_IPJson TEXT,
+						   p_IPts   TEXT)
+						                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      importIP          = p_IPJson,
+      importIPts        = p_IPts;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
 --- Create record in the autoflowStatus table via importRI ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_record$$
