@@ -606,6 +606,59 @@ BEGIN
 
 END$$
 
+
+-- CLEAR edit profiles, models, noises and reports for rawdata accosiated with expID
+DROP PROCEDURE IF EXISTS clear_data_for_experiment$$
+CREATE PROCEDURE clear_data_for_experiment ( p_personGUID   CHAR(36),
+                                     	   p_password     VARCHAR(80),
+                                     	   p_experimentID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_reportID  INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  
+  IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
+
+    -- Make sure records match if they have related tables or not
+    -- Have to do it in a couple of stages because of the constraints
+    DELETE      noise
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
+    LEFT JOIN   noise       ON ( noise.modelID        = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    DELETE      model, modelPerson
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    LEFT JOIN   model       ON ( model.editedDataID   = editedData.editedDataID )
+    LEFT JOIN   modelPerson ON ( modelPerson.modelID  = model.modelID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+    -- Delete any associated reports
+    SELECT reportID INTO l_reportID
+    FROM   report
+    WHERE  experimentID = p_experimentID;
+
+    CALL delete_report( p_personGUID, p_password, l_reportID );
+
+    DELETE      editedData
+    FROM        rawData
+    LEFT JOIN   editedData  ON ( editedData.rawDataID = rawData.rawDataID )
+    WHERE       rawData.experimentID = p_experimentID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 -- DELETEs an experiment, plus information in related tables
 DROP PROCEDURE IF EXISTS delete_experiment$$
 CREATE PROCEDURE delete_experiment ( p_personGUID   CHAR(36),
