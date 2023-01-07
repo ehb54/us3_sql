@@ -676,3 +676,39 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+-- DELETE all pcsa mrecs for run matching description (for protDEV)
+DROP PROCEDURE IF EXISTS delete_run_pcsa_recs$$
+CREATE PROCEDURE delete_run_pcsa_recs ( p_personGUID  CHAR(36),
+                                      p_password    VARCHAR(80),
+                                      p_descr       varchar(160) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE run_pattern VARCHAR(160);
+   
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET run_pattern = CONCAT( p_descr, '.%' );
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  
+    -- Find out if record exists for associated runID 
+    SELECT COUNT(*) INTO count_records 
+    FROM  pcsa_modelrecs
+    WHERE description LIKE run_pattern;
+
+    IF ( count_records > 0 ) THEN
+       DELETE FROM pcsa_modelrecs
+       WHERE description LIKE run_pattern;
+    END IF;   
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$

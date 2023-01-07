@@ -644,7 +644,7 @@ BEGIN
     FROM   report
     WHERE  experimentID = p_experimentID;
 
-    CALL delete_report( p_personGUID, p_password, l_reportID );
+    -- CALL delete_report( p_personGUID, p_password, l_reportID );
 
     DELETE      editedData
     FROM        rawData
