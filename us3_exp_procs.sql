@@ -620,6 +620,8 @@ BEGIN
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
+
+  SET l_reportID = 0;
   
   IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
 
@@ -644,7 +646,9 @@ BEGIN
     FROM   report
     WHERE  experimentID = p_experimentID;
 
-    -- CALL delete_report( p_personGUID, p_password, l_reportID );
+    IF ( l_reportID > 0 ) THEN
+       CALL delete_report( p_personGUID, p_password, l_reportID );
+    END IF;
 
     DELETE      editedData
     FROM        rawData
