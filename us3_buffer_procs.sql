@@ -671,3 +671,48 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
+
+-- creates a new buffer component
+DROP PROCEDURE IF EXISTS create_buffer_component$$
+CREATE PROCEDURE create_buffer_component ( p_personGUID    CHAR(36),
+                                        p_password      VARCHAR(80),
+                                        p_componentGUID CHAR(36),
+                                        p_name          TEXT,
+                                        p_unit          TEXT,
+                                        p_range         TEXT,
+                                        p_grad_form     TINYINT(1),
+                                        p_density       TEXT,
+                                        p_viscosity     TEXT)
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_bufferscomps    INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_bufferscomps
+  FROM       bufferComponent;
+
+  IF ( verify_userlevel( p_personGUID, p_password, 3 ) = @OK ) THEN
+
+      INSERT INTO bufferComponent SET
+        bufferComponentID= count_bufferscomps+1,
+        description              = p_name,
+        units     = p_unit,
+        gradientForming        = p_grad_form,
+        density           = p_density,
+        viscosity         = p_viscosity,
+        c_range              = p_range;
+
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
