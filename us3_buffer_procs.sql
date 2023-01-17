@@ -698,7 +698,7 @@ BEGIN
   INTO       count_bufferscomps
   FROM       bufferComponent;
 
-  IF ( verify_userlevel( p_personGUID, p_password, 3 ) = @OK ) THEN
+  IF ( verify_userlevel( p_personGUID, p_password, 2 ) = @OK ) THEN
 
       INSERT INTO bufferComponent SET
         bufferComponentID= count_bufferscomps+1,
