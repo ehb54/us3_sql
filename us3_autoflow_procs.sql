@@ -156,6 +156,56 @@ END$$
 -- adds autoflow record for ProtDev
 DROP PROCEDURE IF EXISTS add_autoflow_record_dev$$
 CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
+                                     	  p_password      VARCHAR(80),
+                                     	  p_protname      VARCHAR(80),
+                                     	  p_cellchnum     VARCHAR(80),
+                                     	  p_triplenum     VARCHAR(80),
+				     	  p_duration      INT,
+				     	  p_runname       VARCHAR(80),
+				     	  p_expid         INT,
+					  p_optimaname    VARCHAR(300),
+					  p_invID         INT,
+					  p_label         VARCHAR(80),
+					  p_aprofileguid  VARCHAR(80),
+					  p_operatorID    INT )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflow SET
+      protname          = p_protname,
+      cellChNum         = p_cellchnum,
+      tripleNum         = p_triplenum,
+      duration          = p_duration,
+      runName           = p_runname,
+      expID             = p_expid,
+      optimaName        = p_optimaname,
+      invID             = p_invID,
+      created           = NOW(),
+      label		= p_label,
+      gmpRun            = 'NO',
+      aprofileGUID      = p_aprofileguid,
+      operatorID        = p_operatorID,
+      devRecord         = 'YES';
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- adds autoflow record for ProtDev [OLD - when starting from 4. EDIT]
+DROP PROCEDURE IF EXISTS add_autoflow_record_dev_old$$
+CREATE PROCEDURE add_autoflow_record_dev_old ( p_personGUID  CHAR(36),
                                      	 p_password      VARCHAR(80),
                                      	 p_protname      VARCHAR(80),
                                      	 p_cellchnum     VARCHAR(80),
@@ -435,7 +485,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID
+               intensityID, statusID, failedID, operatorID, devRecord
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -480,7 +530,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID
+               intensityID, statusID, failedID, operatorID, devRecord
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
