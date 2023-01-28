@@ -2191,7 +2191,9 @@ BEGIN
   SELECT     requestID
   INTO       autoAnalID
   FROM       autoflowAnalysisHistory
-  WHERE      autoflowID = p_autoflowID AND tripleName = p_triplename;
+  WHERE      autoflowID = p_autoflowID AND tripleName = p_triplename
+  ORDER BY   requestID
+  DESC LIMIT 1;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( autoAnalID = 0 ) THEN
