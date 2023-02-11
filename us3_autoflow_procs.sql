@@ -203,6 +203,45 @@ BEGIN
 END$$
 
 
+-- Mark DEV autoflowHistory record as 'Processed'
+DROP PROCEDURE IF EXISTS mark_autoflowHistoryDevRun_Processed$$
+CREATE PROCEDURE mark_autoflowHistoryDevRun_Processed ( p_personGUID  CHAR(36),
+                                     	  	      p_password      VARCHAR(80),
+                                     	  	      p_ID            INT )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowHistory
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowHistory
+      SET      devRecord = 'Processed'
+      WHERE    ID = p_ID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- adds autoflow record for ProtDev [OLD - when starting from 4. EDIT]
 DROP PROCEDURE IF EXISTS add_autoflow_record_dev_old$$
 CREATE PROCEDURE add_autoflow_record_dev_old ( p_personGUID  CHAR(36),
@@ -634,6 +673,8 @@ END$$
 
 
 
+
+
 -- Returns information about autoflowHistory records for listing
 DROP PROCEDURE IF EXISTS get_autoflow_history_desc$$
 CREATE PROCEDURE get_autoflow_history_desc ( p_personGUID    CHAR(36),
@@ -664,7 +705,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID   
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename,
+	       operatorID, failedID, devRecord   
       FROM     autoflowHistory;
      
     END IF;
