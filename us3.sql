@@ -155,6 +155,21 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table autoflowGMPReport
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS autoflowGMPReport;
+CREATE TABLE IF NOT EXISTS autoflowGMPReport (
+  ID INT(11) NOT NULL AUTO_INCREMENT,
+  autoflowHistoryID   INT(11) NOT NULL UNIQUE,
+  autoflowHistoryName VARCHAR(300) NULL,
+  protocolName        VARCHAR(80) NULL,
+  timeCreated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  data LONGBLOB NULL,
+  PRIMARY KEY (ID) )
+ENGINE = InnoDB;
+
+
 -----------------------------------------------------
 -- Table autoflowFailed --
 -----------------------------------------------------

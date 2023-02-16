@@ -3285,3 +3285,178 @@ BEGIN
   COMMIT;
 
 END$$
+
+
+------------------------------------------------------------------------------
+---- GMP Report --------------------------------------------------------------
+
+-- add new autoflowGMPreport record
+DROP PROCEDURE IF EXISTS new_autoflow_gmp_report_record$$
+CREATE PROCEDURE new_autoflow_gmp_report_record ( p_personGUID   CHAR(36),
+                                    		 p_password      VARCHAR(80),
+                                     		 p_autoflowHID   INT,
+                                     		 p_autoflowHName VARCHAR(300),
+						 p_protocolName  VARCHAR(80) )
+                                                        
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowGMPReport SET
+      autoflowHistoryID   = p_autoflowHID,
+      autoflowHistoryName = p_autoflowHName,
+      protocolName        = p_protocolName,
+      timeCreated         = NOW();
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs the blob data of the autoflowGMPRecord table
+DROP PROCEDURE IF EXISTS upload_gmpReportData$$
+CREATE PROCEDURE  upload_gmpReportData( p_personGUID   CHAR(36),
+                                        p_password     VARCHAR(80),
+                                        p_gmpReportID  INT,
+                                        p_data         LONGBLOB,
+                                        p_checksum     CHAR(33) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_checksum     CHAR(33);
+  DECLARE not_found      TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+    SET not_found = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Compare checksum with calculated checksum
+  SET l_checksum = MD5( p_data );
+  SET @DEBUG = CONCAT( l_checksum , ' ', p_checksum );
+
+  IF ( l_checksum != p_checksum ) THEN
+  
+    -- Checksums don't match; abort
+    SET @US3_LAST_ERRNO = @BAD_CHECKSUM;
+    SET @US3_LAST_ERROR = "MySQL: Transmission error, bad checksum";
+
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ANALYST ) = @OK ) THEN
+
+    -- Since this is autoflow framework, any user of level >=2 can initiate: 
+    UPDATE autoflowGMPReport SET
+   	  data  = p_data
+    WHERE  ID = p_gmpReportID;
+
+    IF ( not_found = 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = "MySQL: No GMP Report data with that ID exists";
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs the blob data of the autoflowGMPReport table
+DROP PROCEDURE IF EXISTS download_gmpReportData$$
+CREATE PROCEDURE download_gmpReportData ( p_personGUID   CHAR(36),
+                                          p_password     VARCHAR(80),
+                                          p_gmpReportID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_count_GMPReportData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Get information to verify that there are records
+  SELECT COUNT(*)
+  INTO   l_count_GMPReportData
+  FROM   autoflowGMPReport
+  WHERE  ID = p_gmpReportID;
+
+  IF ( l_count_GMPReportData != 1 ) THEN
+    -- Probably no rows
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows exist with that ID (or too many rows)';
+
+    SELECT @NOROWS AS status;
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ANALYST ) != @OK ) THEN
+ 
+    -- verify_user_permission
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+
+    SELECT @OK AS status;
+
+    SELECT data, MD5( data )
+    FROM   autoflowGMPReport
+    WHERE  ID = p_gmpReportID;
+
+  END IF;
+
+END$$
+
+-- UPDATEs to clear a record from the autoflowGMPReport table
+DROP PROCEDURE IF EXISTS clear_autoflowGMPReportRecord$$
+CREATE PROCEDURE clear_autoflowGMPReportRecord ( p_personGUID   CHAR(36),
+                                               p_password       VARCHAR(80),
+                                               p_gmpReportID    INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_count_GMPReportData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Get information to verify that there are records
+  SELECT COUNT(*)
+  INTO   l_count_GMPReportData
+  FROM   autoflowGMPReport
+  WHERE  ID = p_gmpReportID;
+
+SET @DEBUG = CONCAT('Reference Scan ID = ', p_gmpReportID,
+                    'Count = ', l_count_GMPReportData );
+
+  IF ( l_count_GMPReportData != 1 ) THEN
+    -- Probably no rows
+    SET @US3_LAST_ERRNO =  @NO_AUTOFLOW_RECORD;
+    SET @US3_LAST_ERROR = 'MySQL: no rows exist with that ID (or too many rows)';
+
+    SELECT @NOROWS AS status;
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) != @OK ) THEN
+ 
+    -- verify_user_permission
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+
+    SELECT @OK AS status;
+
+    DELETE FROM autoflowGMPReport
+    WHERE ID = p_gmpReportID ;
+
+  END IF;
+
+END$$
+
