@@ -165,7 +165,8 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReport (
   autoflowHistoryName VARCHAR(300) NULL,
   protocolName        VARCHAR(80) NULL,
   timeCreated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  data LONGBLOB NULL,
+  data                LONGBLOB NULL,
+  fileNamePdf 	      VARCHAR(300) NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB;
 

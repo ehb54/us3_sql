@@ -3296,11 +3296,17 @@ CREATE PROCEDURE new_autoflow_gmp_report_record ( p_personGUID   CHAR(36),
                                     		 p_password      VARCHAR(80),
                                      		 p_autoflowHID   INT,
                                      		 p_autoflowHName VARCHAR(300),
-						 p_protocolName  VARCHAR(80) )
+						 p_protocolName  VARCHAR(80),
+						 p_filenamepdf   VARCHAR(300) )
                                                         
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+	
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
@@ -3311,9 +3317,17 @@ BEGIN
       autoflowHistoryID   = p_autoflowHID,
       autoflowHistoryName = p_autoflowHName,
       protocolName        = p_protocolName,
-      timeCreated         = NOW();
+      timeCreated         = NOW(),
+      fileNamePdf         = p_filenamepdf;
+      
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for autoflowHistoryID field(s)";
 
-    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+    ELSE
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF; 
 
   END IF;
 
@@ -3460,3 +3474,45 @@ SET @DEBUG = CONCAT('Reference Scan ID = ', p_gmpReportID,
 
 END$$
 
+
+-- Returns information about autoflowGMPReport records for listing
+DROP PROCEDURE IF EXISTS get_autoflowGMPReport_desc$$
+CREATE PROCEDURE  get_autoflowGMPReport_desc( p_personGUID    CHAR(36),
+                                       	      p_password      VARCHAR(80) )
+                                     
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowGMPReport;
+
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, autoflowHistoryID, autoflowHistoryName, protocolName,
+      	       timeCreated, fileNamePdf
+      FROM     autoflowGMPReport;
+     
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
