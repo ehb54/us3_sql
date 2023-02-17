@@ -189,7 +189,7 @@ BEGIN
       invID             = p_invID,
       created           = NOW(),
       label		= p_label,
-      gmpRun            = 'NO',
+      gmpRun            = 'YES',
       aprofileGUID      = p_aprofileguid,
       operatorID        = p_operatorID,
       devRecord         = 'YES';
