@@ -1621,6 +1621,62 @@ BEGIN
 END$$
 
 
+-- Update and return status of the REPORT while trying to save GMP Report into DB ---
+DROP PROCEDURE IF EXISTS autoflow_report_status$$
+CREATE PROCEDURE autoflow_report_status ( p_personGUID CHAR(36),
+                                 	  p_password   VARCHAR(80),
+                                          p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     reporting
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     reporting = 'STARTED'
+      WHERE   autoflowID = p_id;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
 
 
 

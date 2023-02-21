@@ -292,6 +292,7 @@ CREATE TABLE autoflowStages (
   liveUpdate        text         DEFAULT "unknown",
   import            text         DEFAULT "unknown",
   editing           text         DEFAULT "unknown",
+  reporting         text         DEFAULT "unknown",
 
   PRIMARY KEY (autoflowID)
   ) ENGINE=InnoDB;
