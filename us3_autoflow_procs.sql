@@ -2703,6 +2703,66 @@ CREATE PROCEDURE update_autoflowStatusAnalysisFitmen_record ( p_personGUID    CH
                                              	            p_password      VARCHAR(80),
                                        	     	            p_ID    	      INT,
 					  	            p_autoflowID      INT,
+                                                            p_AnalysisTriple  TEXT,
+                                                            p_AnalysisAction  TEXT )
+
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE analysis_json TEXT;
+  DECLARE p_AnalysisAction_plus_date TEXT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  SELECT     analysis
+  INTO       analysis_json
+  FROM       autoflowStatus
+  WHERE     ID = p_ID AND autoflowID = p_autoflowID;
+  
+  SELECT concat( p_AnalysisAction, '; ', DATE_FORMAT(NOW(), '%Y-%m-%d %h:%i:%s'))
+  INTO   p_AnalysisAction_plus_date;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      IF ( analysis_json IS NULL ) THEN 
+        UPDATE   autoflowStatus
+        SET      analysis  = JSON_OBJECT(p_AnalysisTriple, p_AnalysisAction_plus_date)
+        WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+      ELSE
+         UPDATE  autoflowStatus
+         SET     analysis = JSON_ARRAY_APPEND(analysis, '$', JSON_OBJECT(p_AnalysisTriple, p_AnalysisAction_plus_date))
+         WHERE   ID = p_ID AND autoflowID = p_autoflowID;
+
+      END IF;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- [OLD] Update autoflowStatus record via analysis FITMEN
+DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisFitmen_record_old$$
+CREATE PROCEDURE update_autoflowStatusAnalysisFitmen_record_old ( p_personGUID    CHAR(36),
+                                             	            p_password      VARCHAR(80),
+                                       	     	            p_ID    	      INT,
+					  	            p_autoflowID      INT,
                                                             p_AnalysisJson    TEXT,
                                                             p_AnalysisTriple  TEXT,
                                                             p_AnalysisAction  TEXT )
@@ -2725,8 +2785,8 @@ BEGIN
   SELECT     analysis
   INTO       analysis_json
   FROM       autoflowStatus
-  WHERE     ID = p_ID AND autoflowID = p_autoflowID; 
-
+  WHERE     ID = p_ID AND autoflowID = p_autoflowID;
+  
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
       SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
@@ -2752,6 +2812,7 @@ BEGIN
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
 
 
 -- Returns complete information about autoflowStatus record
