@@ -204,7 +204,9 @@ CREATE TABLE autoflowStatus (
   editIP            json,
   editIPts          timestamp    NULL,
   analysis          json,
-
+  GMPreport   	    json,
+  GMPreportts       timestamp 	 NULL,
+  
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;
 

@@ -2697,6 +2697,47 @@ END$$
 
 
 
+-- Update autoflowStatus record via GMPreport
+DROP PROCEDURE IF EXISTS update_autoflowStatusReport_record$$
+CREATE PROCEDURE update_autoflowStatusReport_record ( p_personGUID    CHAR(36),
+                                             	      p_password      VARCHAR(80),
+                                       	     	      p_ID    	      INT,
+					  	      p_autoflowID    INT,
+                                                      p_reportJson    TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      GMPreport = p_IPJson, GMPreportts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 -- Update autoflowStatus record via analysis FITMEN
 DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisFitmen_record$$
 CREATE PROCEDURE update_autoflowStatusAnalysisFitmen_record ( p_personGUID    CHAR(36),
