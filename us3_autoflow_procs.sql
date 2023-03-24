@@ -2078,7 +2078,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength, totalConcTol, expDurationTol, reportMaskJson
+      SELECT   channelName, totalConc, rmsdLimit, avIntensity, expDuration, wavelength,
+      	       totalConcTol, expDurationTol, reportMaskJson, tripleDropped
       FROM     autoflowReport 
       WHERE    reportID = p_reportID;
 
