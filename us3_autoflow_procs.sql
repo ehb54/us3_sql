@@ -3089,7 +3089,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   importRI, importRIts, importIP, importIPts,
-               editRI, editRIts, editIP, editIPts, analysis
+               editRI, editRIts, editIP, editIPts, analysis,
+	       stopOptima, stopOptimats, skipOptima, skipOptimats
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
