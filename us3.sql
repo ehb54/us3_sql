@@ -206,6 +206,10 @@ CREATE TABLE autoflowStatus (
   analysis          json,
   GMPreport   	    json,
   GMPreportts       timestamp 	 NULL,
+  stopOptima        json,
+  stopOptimats      timestamp 	 NULL,
+  skipOptima        json,
+  skipOptimats      timestamp 	 NULL,
   
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;

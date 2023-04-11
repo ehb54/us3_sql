@@ -881,6 +881,48 @@ END$$
 
 
 
+-- Update autoflow record with expAborted_[REMOTELY] at LIVE_UPDATE
+DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_expaborted_remotely$$
+CREATE PROCEDURE update_autoflow_at_live_update_expaborted_remotely ( p_personGUID    CHAR(36),
+                                             			    p_password      VARCHAR(80),
+								    p_statusID      INT,
+                                       	     			    p_runID    	    INT,
+                                                		    p_optima        VARCHAR(300) )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID AND optimaName = p_optima;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      expAborted = 'YES', statusID = p_statusID
+      WHERE    runID = p_runID AND optimaName = p_optima;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 -- Update autoflow record with next stage && filename at EDITING (LIMS IMPORT)
 DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
@@ -2467,6 +2509,163 @@ BEGIN
 
 END$$
 
+
+--- Create record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event--------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusStopOptima_record$$
+CREATE FUNCTION new_autoflowStatusStopOptima_record ( p_personGUID CHAR(36),
+                                      	      	    p_password   VARCHAR(80),
+					      	    p_autoflowID int(11),
+					      	    p_stopOptimaJson TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      stopOptima        = p_stopOptimaJson,
+      stopOptimats      = NOW();
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+--- Create record in the autoflowStatus table via LIVE_UPDATE's SKIP Optima event--------------
+
+DROP FUNCTION IF EXISTS new_autoflowStatusSkipOptima_record$$
+CREATE FUNCTION new_autoflowStatusSkipOptima_record ( p_personGUID CHAR(36),
+                                      	      	    p_password   VARCHAR(80),
+					      	    p_autoflowID int(11),
+					      	    p_skipOptimaJson TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      skippOptima        = p_skipOptimaJson,
+      skipOptimats      = NOW();
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+
+-- Update record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event --------------
+
+DROP PROCEDURE IF EXISTS update_autoflowStatusStopOptima_record$$
+CREATE PROCEDURE update_autoflowStatusStopOptima_record ( p_personGUID    CHAR(36),
+                                             	  	p_password        VARCHAR(80),
+                                       	     	  	p_ID    	  INT,
+					  	  	p_autoflowID      INT,
+                                                  	p_stopOptimaJson  TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      stopOptima  = p_stopOptimaJson, stopOptimats = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+-- Update record in the autoflowStatus table via LIVE_UPDATE's SKIP Optima event --------------
+
+DROP PROCEDURE IF EXISTS update_autoflowStatusSkipOptima_record$$
+CREATE PROCEDURE update_autoflowStatusSkipOptima_record ( p_personGUID    CHAR(36),
+                                             	  	  p_password        VARCHAR(80),
+                                       	     	  	  p_ID    	  INT,
+					  	  	  p_autoflowID      INT,
+                                                  	  p_skipOptimaJson  TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      skipOptima  = p_skipOptimaJson, skipOptimats = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+
 --- Create record in the autoflowStatus table via importRI ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_record$$
@@ -2535,6 +2734,9 @@ BEGIN
   RETURN( record_id );
 
 END$$
+
+
+
 
 
 -- Update autoflowStatus record via importRI
