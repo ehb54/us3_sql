@@ -2568,7 +2568,7 @@ BEGIN
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO autoflowStatus SET
       autoflowID        = p_autoflowID,
-      skippOptima        = p_skipOptimaJson,
+      skipOptima        = p_skipOptimaJson,
       skipOptimats      = NOW();
      
     SELECT LAST_INSERT_ID() INTO record_id;
