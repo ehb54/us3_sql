@@ -3153,7 +3153,8 @@ BEGIN
 
       SELECT   importRI, importRIts, importIP, importIPts,
                editRI, editRIts, editIP, editIPts, analysis,
-	       stopOptima, stopOptimats, skipOptima, skipOptimats
+	       stopOptima, stopOptimats, skipOptima, skipOptimats,
+	       analysisCancel
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
