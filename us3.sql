@@ -210,6 +210,7 @@ CREATE TABLE autoflowStatus (
   stopOptimats      timestamp 	 NULL,
   skipOptima        json,
   skipOptimats      timestamp 	 NULL,
+  analysisCancel    json,
   
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;

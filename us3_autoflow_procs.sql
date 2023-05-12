@@ -3001,6 +3001,69 @@ BEGIN
 END$$
 
 
+
+-- Update autoflowStatus record via analysis CANCEL Job
+DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisCancel_record$$
+CREATE PROCEDURE update_autoflowStatusAnalysisCancel_record ( p_personGUID    CHAR(36),
+                                             	            p_password      VARCHAR(80),
+                                       	     	            p_ID    	      INT,
+					  	            p_autoflowID      INT,
+                                                            p_CancelTriples   TEXT,
+                                                            p_CancelAction    TEXT )
+
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE analysisCancel_json TEXT;
+  DECLARE p_CancelAction_plus_date TEXT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  SELECT     analysisCancel
+  INTO       analysisCancel_json
+  FROM       autoflowStatus
+  WHERE     ID = p_ID AND autoflowID = p_autoflowID;
+  
+  SELECT concat( p_CancelAction, '; ', DATE_FORMAT(NOW(), '%Y-%m-%d %h:%i:%s'))
+  INTO   p_CancelAction_plus_date;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      IF ( analysisCancel_json IS NULL ) THEN 
+        UPDATE   autoflowStatus
+        SET      analysisCancel  = JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date)
+        WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+      ELSE
+         UPDATE  autoflowStatus
+         SET     analysisCancel = JSON_ARRAY_APPEND(analysisCancel, '$', JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date))
+         WHERE   ID = p_ID AND autoflowID = p_autoflowID;
+
+      END IF;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
+
 -- [OLD] Update autoflowStatus record via analysis FITMEN
 DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisFitmen_record_old$$
 CREATE PROCEDURE update_autoflowStatusAnalysisFitmen_record_old ( p_personGUID    CHAR(36),
