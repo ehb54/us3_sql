@@ -3942,3 +3942,214 @@ BEGIN
   END IF;
 
 END$$
+
+
+---------------------------------------------------------------------------------------------
+--- e-Signatures related --------------------------------------------------------------------
+---------------------------------------------------------------------------------------------
+
+----- Returns complete information about autoflowGMPReportEsign record by autoflowID
+DROP PROCEDURE IF EXISTS get_gmp_review_info_by_autoflowID$$
+CREATE PROCEDURE get_gmp_review_info_by_autoflowID( p_personGUID    CHAR(36),
+                                       		    p_password      VARCHAR(80),
+                                       		    p_ID            INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowGMPReportEsign
+  WHERE      autoflowID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, autoflowID, autoflowName, reviewersListJson,
+      	       eSignStatusJson, eSignStatusAll, createUpdateLogJson
+      FROM     autoflowGMPReportEsign
+      WHERE    autoflowID = p_ID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+----- new autoflowGMPReportEsign record ---------------------------------
+DROP FUNCTION IF EXISTS new_gmp_review_record$$
+CREATE FUNCTION  new_gmp_review_record ( p_personGUID   CHAR(36),
+                                      	 p_password     VARCHAR(80),
+					 p_autoflowID   INT(11),
+					 p_autoflowName TEXT,
+					 p_revListJson  TEXT,
+					 p_eSignJson    TEXT,
+					 p_logJson      TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowGMPReportEsign SET
+       autoflowID          = p_autoflowID,
+       autoflowName        = p_autoflowName,
+       reviewersListJson   = p_revListJson,
+       eSignStatusJson     = p_eSignJson,
+       createUpdateLogJson = p_logJson;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+-- Update autoflowGMPReportEsign record by ADMIN assigner
+DROP PROCEDURE IF EXISTS update_gmp_review_record_by_admin$$
+CREATE PROCEDURE update_gmp_review_record_by_admin ( p_personGUID  CHAR(36),
+                                             	     p_password      VARCHAR(80),
+                                       	     	     p_eSignID       INT,
+					  	     p_autoflowID    INT,
+                                                     p_revListJson   TEXT,
+						     p_eSignJson     TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowGMPReportEsign
+  WHERE      ID = p_eSignID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowGMPReportEsign
+      SET      reviewersListJson = p_revListJson, eSignStatusJson = p_eSignJson
+      WHERE    ID = p_eSignID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Update autoflowGMPReportEsign record by e-Signer
+DROP PROCEDURE IF EXISTS update_gmp_review_record_by_esigner$$
+CREATE PROCEDURE update_gmp_review_record_by_esigner ( p_personGUID  CHAR(36),
+                                             	     p_password      VARCHAR(80),
+                                       	     	     p_eSignID       INT,
+					  	     p_autoflowID    INT,
+                                                     p_eSignJson     TEXT,
+						     p_eSignAll      TEXT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowGMPReportEsign
+  WHERE      ID = p_eSignID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowGMPReportEsign
+      SET      eSignStatusJson = p_eSignJson, eSignStatusAll = p_eSignAll
+      WHERE    ID = p_eSignID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Update autoflow's 'gmpReviewID' with the newly returned e-Signature ID
+DROP PROCEDURE IF EXISTS update_autoflow_with_gmpReviewID$$
+CREATE PROCEDURE update_autoflow_with_gmpReviewID ( p_personGUID   CHAR(36),
+                                             	  p_password       VARCHAR(80),
+                                       	     	  p_ID		   INT,
+					  	  p_gmpReviewID    INT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE count_records_history INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      ID = p_ID;
+
+  SELECT     COUNT(*)
+  INTO       count_records_history
+  FROM       autoflowHistory
+  WHERE      ID = p_ID; 
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records != 0 ) THEN
+      UPDATE   autoflow
+      SET      gmpReviewID = p_gmpReviewID
+      WHERE    ID = p_ID;
+   END IF;    
+      
+   IF ( count_records_history != 0 ) THEN
+      UPDATE   autoflowHistory
+      SET      gmpReviewID = p_gmpReviewID
+      WHERE    ID = p_ID;            
+   END IF;
+
+  END IF;
+
+END$$

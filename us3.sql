@@ -94,7 +94,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   runName varchar(300) NULL,
   expID  int(10) NULL,
   runID  int(10) NULL,
-  status enum('LIVE_UPDATE','EDITING','EDIT_DATA','ANALYSIS','REPORT') NOT NULL,
+  status enum('LIVE_UPDATE','EDITING','EDIT_DATA','ANALYSIS','REPORT','E-SIGNATURES') NOT NULL,
   dataPath varchar(300) NULL,
   optimaName varchar(300) NULL,
   runStarted TIMESTAMP NULL,
@@ -112,6 +112,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   statusID    int(11) NULL,
   failedID    int(11) NULL,
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
+  gmpReviewID int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -132,7 +133,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   runName varchar(300) NULL,
   expID  int(10) NULL,
   runID  int(10) NULL,
-  status enum('LIVE_UPDATE','EDITING','EDIT_DATA','ANALYSIS','REPORT') NOT NULL,
+  status enum('LIVE_UPDATE','EDITING','EDIT_DATA','ANALYSIS','REPORT','E-SIGNATURES') NOT NULL,
   dataPath varchar(300) NULL,
   optimaName varchar(300) NULL,
   runStarted TIMESTAMP NULL,
@@ -150,6 +151,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   statusID    int(11) NULL,
   failedID    int(11) NULL,
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
+  gmpReviewID int(11) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -169,6 +171,22 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReport (
   fileNamePdf 	      VARCHAR(300) NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table autoflowGMPReportEsign
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS autoflowGMPReportEsign;
+CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
+  ID                   INT(11)   NOT NULL AUTO_INCREMENT,
+  autoflowID           INT(11)   NOT NULL UNIQUE,
+  autoflowName         VARCHAR(300)  NULL,
+  reviewersListJson    json,
+  eSignStatusJson      json,
+  eSignStatusAll       ENUM ('NO','YES') NOT NULL,
+  createUpdateLogJson  json,
+  PRIMARY KEY (ID) )
+ENGINE = InnoDB; 
 
 
 -----------------------------------------------------
