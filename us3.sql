@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
   ID                   INT(11)   NOT NULL AUTO_INCREMENT,
   autoflowID           INT(11)   NOT NULL UNIQUE,
   autoflowName         VARCHAR(300)  NULL,
+  operatorListJson     json,
   reviewersListJson    json,
   eSignStatusJson      json,
   eSignStatusAll       ENUM ('NO','YES') NOT NULL,
