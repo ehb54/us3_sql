@@ -165,7 +165,9 @@ BEGIN
                phone,
                organization,
                email,
-               personGUID
+               personGUID,
+	       userlevel,
+	       gmpReviewer
       FROM     people
       WHERE    personID = p_ID;
 

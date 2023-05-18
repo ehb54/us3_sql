@@ -36,6 +36,7 @@ CREATE  TABLE IF NOT EXISTS people (
   clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede2:comet:jetstream',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
+  gmpReviewer TINYINT(1) NOT NULL DEFAULT false ,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
 
