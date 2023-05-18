@@ -127,6 +127,68 @@ BEGIN
 
 END$$
 
+
+-- Lists all ID's and names in the database [global reviewers] optionally matching
+--   some text in the last name field
+DROP PROCEDURE IF EXISTS get_people_grev$$
+CREATE PROCEDURE get_people_grev( p_personGUID CHAR(36),
+                             	  p_password   VARCHAR(80),
+                             	  p_template   VARCHAR(30) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE template VARCHAR(40);
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET p_template      = TRIM( p_template );
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_people( p_personGUID, p_password, p_template )  < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( LENGTH(p_template) = 0 ) THEN
+      SELECT @OK AS status;
+
+      SELECT   personID,
+               lname AS lastName,
+               fname AS firstName,
+               organization
+      FROM     people
+      WHERE    gmpReviewer = 1
+      ORDER BY lname;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SET template = CONCAT('%', p_template, '%');
+
+      SELECT   personID,
+               lname AS lastName,
+               fname AS firstName,
+               organization
+      FROM     people
+      WHERE    lname LIKE template
+      OR       fname LIKE template
+      AND      gmpReviewer = 1
+      ORDER BY lname, fname;
+    
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
+
 -- Returns a more complete list of information about one user
 DROP PROCEDURE IF EXISTS get_person_info$$
 CREATE PROCEDURE get_person_info( p_personGUID CHAR(36),
