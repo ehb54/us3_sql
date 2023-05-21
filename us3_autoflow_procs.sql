@@ -4040,7 +4040,7 @@ CREATE PROCEDURE update_gmp_review_record_by_admin ( p_personGUID  CHAR(36),
 					  	     p_autoflowID    INT,
 						     p_operListJson  TEXT,
                                                      p_revListJson   TEXT,
-						     p_eSignJson     TEXT )
+						     p_logJson       TEXT )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -4064,7 +4064,7 @@ BEGIN
       UPDATE   autoflowGMPReportEsign
       SET      operatorListJson = p_operListJson,
       	       reviewersListJson = p_revListJson,
-	       eSignStatusJson = p_eSignJson
+	       createUpdateLogJson = p_logJson
       WHERE    ID = p_eSignID AND autoflowID = p_autoflowID;
 
     END IF;
