@@ -13,6 +13,37 @@ DELIMITER $$
 --
 
 
+-- check if run [filename] is required by GMP (autoflow, autoflowHistory tables)
+DROP FUNCTION IF EXISTS check_filename_for_autoflow$$
+CREATE FUNCTION check_filename_for_autoflow ( p_personGUID  CHAR(36),
+                                   	      p_password    VARCHAR(80),
+					      p_filename    varchar(300) )
+  RETURNS INT
+  READS SQL DATA					      
+  
+BEGIN
+  DECLARE count_runs   INT;
+  DECLARE count_runs_h INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT COUNT(*) INTO count_runs 
+  FROM autoflow 
+  WHERE filename = p_filename;
+
+  SELECT COUNT(*) INTO count_runs_h
+  FROM autoflowHistory
+  WHERE filename = p_filename;
+
+
+  RETURN( count_runs + count_runs_h );
+
+END$$
+
+
+
 -- Returns the count of autoflow records in db
 DROP FUNCTION IF EXISTS count_autoflow_records$$
 CREATE FUNCTION count_autoflow_records ( p_personGUID CHAR(36),
