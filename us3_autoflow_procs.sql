@@ -4023,22 +4023,19 @@ BEGIN
 END$$
 
 ----- new autoflowGMPReportEsign record ---------------------------------
-DROP FUNCTION IF EXISTS new_gmp_review_record$$
-CREATE FUNCTION  new_gmp_review_record ( p_personGUID   CHAR(36),
+DROP PROCEDURE IF EXISTS new_gmp_review_record$$
+CREATE PROCEDURE  new_gmp_review_record ( p_personGUID   CHAR(36),
                                       	 p_password     VARCHAR(80),
 					 p_autoflowID   INT(11),
-					 p_autoflowName TEXT,
-					 p_operListJson TEXT,
-					 p_revListJson  TEXT,
-					 p_eSignJson    TEXT,
-					 p_logJson      TEXT )
-                                       
-  RETURNS INT
+                                         p_autoflowName VARCHAR(300),
+                                         p_operListJson TEXT,
+                                         p_revListJson  TEXT,
+                                         p_eSignJson    TEXT,
+                                         p_logJson      TEXT )
+
   MODIFIES SQL DATA
 
 BEGIN
-
-  DECLARE record_id INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -4053,14 +4050,15 @@ BEGIN
        reviewersListJson   = p_revListJson,
        eSignStatusJson     = p_eSignJson,
        createUpdateLogJson = p_logJson;
-     
-    SELECT LAST_INSERT_ID() INTO record_id;
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
   END IF;
 
-  RETURN( record_id );
+  SELECT @US3_LAST_ERRNO AS status;
 
 END$$
+
 
 
 -- Update autoflowGMPReportEsign record by ADMIN assigner
