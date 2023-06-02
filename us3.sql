@@ -187,6 +187,7 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
   eSignStatusJson      json,
   eSignStatusAll       ENUM ('NO','YES') NOT NULL,
   createUpdateLogJson  json,
+  data                 LONGBLOB NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB; 
 
@@ -320,6 +321,7 @@ CREATE TABLE autoflowStages (
   import            text         DEFAULT "unknown",
   editing           text         DEFAULT "unknown",
   reporting         text         DEFAULT "unknown",
+  esigning          text         DEFAULT "unknown",
 
   PRIMARY KEY (autoflowID)
   ) ENGINE=InnoDB;

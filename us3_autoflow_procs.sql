@@ -4187,3 +4187,196 @@ BEGIN
   END IF;
 
 END$$
+
+
+-- UPDATEs the blob data of the autoflowGMPReportEsign
+DROP PROCEDURE IF EXISTS upload_gmpReportEsignData$$
+CREATE PROCEDURE  upload_gmpReportEsignData( p_personGUID   CHAR(36),
+                                       	     p_password     VARCHAR(80),
+                                             p_eSignID      INT,
+                                             p_data         LONGBLOB,
+                                             p_checksum     CHAR(33) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_checksum     CHAR(33);
+  DECLARE not_found      TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+    SET not_found = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Compare checksum with calculated checksum
+  SET l_checksum = MD5( p_data );
+  SET @DEBUG = CONCAT( l_checksum , ' ', p_checksum );
+
+  IF ( l_checksum != p_checksum ) THEN
+  
+    -- Checksums don't match; abort
+    SET @US3_LAST_ERRNO = @BAD_CHECKSUM;
+    SET @US3_LAST_ERROR = "MySQL: Transmission error, bad checksum";
+
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ANALYST ) = @OK ) THEN
+
+    -- Since this is autoflow framework, any user of level >=2 can initiate: 
+    UPDATE autoflowGMPReportEsign SET
+   	  data  = p_data
+    WHERE  ID = p_eSignID;
+
+    IF ( not_found = 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = "MySQL: No GMP Report ESign data with that ID exists";
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs the blob data of the autoflowGMPReportEsign table
+DROP PROCEDURE IF EXISTS download_gmpReportEsignData$$
+CREATE PROCEDURE download_gmpReportEsignData ( p_personGUID   CHAR(36),
+                                             p_password     VARCHAR(80),
+                                             p_eSignID      INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE l_count_GMPReportData INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  -- Get information to verify that there are records
+  SELECT COUNT(*)
+  INTO   l_count_GMPReportData
+  FROM   autoflowGMPReportEsign
+  WHERE  ID = p_eSignID;
+
+  IF ( l_count_GMPReportData != 1 ) THEN
+    -- Probably no rows
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows exist with that ID (or too many rows)';
+
+    SELECT @NOROWS AS status;
+    
+  ELSEIF ( verify_userlevel( p_personGUID, p_password, @US3_ANALYST ) != @OK ) THEN
+ 
+    -- verify_user_permission
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSE
+
+    SELECT @OK AS status;
+
+    SELECT data, MD5( data )
+    FROM   autoflowGMPReportEsign
+    WHERE  ID = p_eSignID;
+
+  END IF;
+
+END$$
+
+
+-- Update and return status of the E-Signing while trying to ESign || update reviewers || upload blob ---
+DROP PROCEDURE IF EXISTS autoflow_esigning_status$$
+CREATE PROCEDURE autoflow_esigning_status ( p_personGUID CHAR(36),
+                                            p_password   VARCHAR(80),
+                                            p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  DECLARE unique_start TINYINT DEFAULT 0;
+       
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+      -- ERROR
+    ROLLBACK;
+   END;
+   
+  DECLARE exit handler for sqlwarning
+   BEGIN
+     -- WARNING
+    ROLLBACK;
+   END;
+
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+
+  START TRANSACTION;
+  
+  SELECT     esigning
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status = 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     esigning = 'STARTED'
+      WHERE   autoflowID = p_id;
+
+      SET unique_start = 1;
+
+    END IF;
+
+  END IF;
+
+  SELECT unique_start as status;
+  -- RETURN (unique_start);
+  COMMIT;
+
+END$$
+
+
+-- Revert eSigning status in autoflowStages record ---
+DROP PROCEDURE IF EXISTS autoflow_esigning_status_revert$$
+CREATE PROCEDURE autoflow_esigning_status_revert ( p_personGUID CHAR(36),
+                                                   p_password   VARCHAR(80),
+                                                   p_id  INT )
+
+  -- RETURNS INT
+  MODIFIES SQL DATA
+  
+BEGIN
+  DECLARE current_status TEXT;
+  -- DECLARE unique_start TINYINT DEFAULT 0;
+       
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  
+  SELECT     esigning
+  INTO       current_status
+  FROM       autoflowStages
+  WHERE      autoflowID = p_id;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( current_status != 'unknown' ) THEN
+      UPDATE  autoflowStages
+      SET     esigning = DEFAULT
+      WHERE   autoflowID = p_id;
+
+    END IF;
+
+  END IF;
+
+  -- SELECT unique_start as status;
+  -- RETURN (unique_start);
+  
+END$$
+
+
