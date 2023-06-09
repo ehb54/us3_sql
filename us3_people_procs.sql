@@ -189,7 +189,7 @@ END$$
 -- Lists all ID's and names in the database [ ![NOT] global reviewers] optionally matching
 --   some text in the last name field
 DROP PROCEDURE IF EXISTS get_people_inv$$
-CREATE PROCEDURE get_people_inv( p_personGUID CHAR(36),
+CREATE PROCEDURE get_people_inv(  p_personGUID CHAR(36),
                              	  p_password   VARCHAR(80),
                              	  p_template   VARCHAR(30) )
   READS SQL DATA
@@ -215,7 +215,8 @@ BEGIN
       SELECT   personID,
                lname AS lastName,
                fname AS firstName,
-               organization
+               organization,
+	       userlevel
       FROM     people
       WHERE    gmpReviewer = 0
       ORDER BY lname;
@@ -228,7 +229,8 @@ BEGIN
       SELECT   personID,
                lname AS lastName,
                fname AS firstName,
-               organization
+               organization,
+	       userlevel
       FROM     people
       WHERE    (gmpReviewer = 0)
       AND      (lname LIKE template OR fname LIKE template) 
