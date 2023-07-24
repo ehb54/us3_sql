@@ -555,7 +555,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -600,7 +600,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
