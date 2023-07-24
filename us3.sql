@@ -232,7 +232,9 @@ CREATE TABLE autoflowStatus (
   skipOptima        json,
   skipOptimats      timestamp 	 NULL,
   analysisCancel    json,
-  
+  createdGMPrun     json,
+  createdGMPrunts   timestamp    NULL,
+
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;
 

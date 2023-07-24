@@ -2431,6 +2431,9 @@ BEGIN
 END$$
 
 
+
+
+
 --- Create record in the autoflowStatus table via importRI && importIP for ProtDEv module ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_IP_dev_record$$
@@ -2531,6 +2534,40 @@ BEGIN
       autoflowID        = p_autoflowID,
       importIP          = p_IPJson,
       importIPts        = p_IPts;
+     
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+--- Create record in the autoflowStatus table via EXPERIMENT's creation GMP run --------------
+DROP FUNCTION IF EXISTS new_autoflowStatusGMPCreate_record$$
+CREATE FUNCTION new_autoflowStatusGMPCreate_record( p_personGUID CHAR(36),
+                                      	      	    p_password   VARCHAR(80),
+					      	    p_autoflowID int(11),
+					      	    p_createdGMPrun TEXT )
+                                       
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowStatus SET
+      autoflowID        = p_autoflowID,
+      createdGMPrun     = p_createdGMPrun,
+      createdGMPrunts   = NOW();
      
     SELECT LAST_INSERT_ID() INTO record_id;
 
