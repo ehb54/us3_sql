@@ -1078,6 +1078,45 @@ BEGIN
 
 END$$
 
+-- Update autoflow record with next stage at REPORT (REPORT to E-SIGNS)
+DROP PROCEDURE IF EXISTS update_autoflow_at_report$$
+CREATE PROCEDURE update_autoflow_at_report   ( p_personGUID    CHAR(36),
+                                               p_password      VARCHAR(80),
+                                       	       p_runID    	INT,
+                                               p_optima        VARCHAR(300)  )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID AND optimaName = p_optima;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      status = 'E-SIGNATURES'
+      WHERE    runID = p_runID AND optimaName = p_optima;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
 --- Create reacord in the autoflowAnalysis table ------------------------
 
