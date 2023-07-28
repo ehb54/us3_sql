@@ -4085,7 +4085,7 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, autoflowID, autoflowName, operatorListJson, reviewersListJson,
-      	       eSignStatusJson, eSignStatusAll, createUpdateLogJson
+      	       eSignStatusJson, eSignStatusAll, createUpdateLogJson, approversListJson
       FROM     autoflowGMPReportEsign
       WHERE    autoflowID = p_ID;
 
@@ -4106,6 +4106,7 @@ CREATE PROCEDURE  new_gmp_review_record ( p_personGUID   CHAR(36),
                                          p_autoflowName VARCHAR(300),
                                          p_operListJson TEXT,
                                          p_revListJson  TEXT,
+					 p_apprListJson TEXT,
                                          p_eSignJson    TEXT,
                                          p_logJson      TEXT )
 
@@ -4124,6 +4125,7 @@ BEGIN
        autoflowName        = p_autoflowName,
        operatorListJson    = p_operListJson,
        reviewersListJson   = p_revListJson,
+       approversListJson   = p_apprListJson,
        eSignStatusJson     = p_eSignJson,
        createUpdateLogJson = p_logJson;
 
@@ -4145,6 +4147,8 @@ CREATE PROCEDURE update_gmp_review_record_by_admin ( p_personGUID  CHAR(36),
 					  	     p_autoflowID    INT,
 						     p_operListJson  TEXT,
                                                      p_revListJson   TEXT,
+						     p_apprListJson  TEXT,
+						     p_eSignJson     TEXT,
 						     p_logJson       TEXT )
   MODIFIES SQL DATA  
 
@@ -4167,8 +4171,10 @@ BEGIN
 
     ELSE
       UPDATE   autoflowGMPReportEsign
-      SET      operatorListJson = p_operListJson,
-      	       reviewersListJson = p_revListJson,
+      SET      operatorListJson   = p_operListJson,
+      	       reviewersListJson   = p_revListJson,
+	       approversListJson   = p_apprListJson,
+	       eSignStatusJson     = p_eSignJson,
 	       createUpdateLogJson = p_logJson
       WHERE    ID = p_eSignID AND autoflowID = p_autoflowID;
 

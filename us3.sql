@@ -37,6 +37,7 @@ CREATE  TABLE IF NOT EXISTS people (
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
   gmpReviewer TINYINT(1) NOT NULL DEFAULT false ,
+  gmpApprover TINYINT(1) NOT NULL DEFAULT false ,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
 
@@ -184,6 +185,7 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
   autoflowName         VARCHAR(300)  NULL,
   operatorListJson     json,
   reviewersListJson    json,
+  approversListJson    json,
   eSignStatusJson      json,
   eSignStatusAll       ENUM ('NO','YES') NOT NULL,
   createUpdateLogJson  json,
