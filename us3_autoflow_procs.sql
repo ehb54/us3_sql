@@ -4271,6 +4271,39 @@ BEGIN
 END$$
 
 
+-- Update autoflow's 'statusID' with the newly returned statusID
+DROP PROCEDURE IF EXISTS update_autoflow_with_statusID$$
+CREATE PROCEDURE update_autoflow_with_statusID ( p_personGUID   CHAR(36),
+                                             	 p_password       VARCHAR(80),
+                                       	     	 p_ID		   INT,
+					  	 p_statusID    INT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      ID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records != 0 ) THEN
+      UPDATE   autoflow
+      SET      statusID = p_statusID
+      WHERE    ID = p_ID;
+   END IF;    
+      
+  END IF;
+
+END$$
+
+
+
 -- UPDATEs the blob data of the autoflowGMPReportEsign
 DROP PROCEDURE IF EXISTS upload_gmpReportEsignData$$
 CREATE PROCEDURE  upload_gmpReportEsignData( p_personGUID   CHAR(36),
