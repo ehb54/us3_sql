@@ -37,6 +37,7 @@ CREATE  TABLE IF NOT EXISTS people (
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   advancelevel TINYINT NOT NULL DEFAULT 0 ,
   gmpReviewer TINYINT(1) NOT NULL DEFAULT false ,
+  gmpApprover TINYINT(1) NOT NULL DEFAULT false ,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
 
@@ -170,6 +171,7 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReport (
   timeCreated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   data                LONGBLOB NULL,
   fileNamePdf 	      VARCHAR(300) NULL,
+  html_s              LONGBLOB  NULL,
   PRIMARY KEY (ID) )
 ENGINE = InnoDB;
 
@@ -184,6 +186,7 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
   autoflowName         VARCHAR(300)  NULL,
   operatorListJson     json,
   reviewersListJson    json,
+  approversListJson    json,
   eSignStatusJson      json,
   eSignStatusAll       ENUM ('NO','YES') NOT NULL,
   createUpdateLogJson  json,
@@ -232,7 +235,9 @@ CREATE TABLE autoflowStatus (
   skipOptima        json,
   skipOptimats      timestamp 	 NULL,
   analysisCancel    json,
-  
+  createdGMPrun     json,
+  createdGMPrunts   timestamp    NULL,
+
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;
 
