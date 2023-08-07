@@ -1609,7 +1609,7 @@ CREATE  TABLE IF NOT EXISTS image (
   imageID int(11) NOT NULL AUTO_INCREMENT ,
   imageGUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL DEFAULT 'No description was entered for this image' ,
-  gelPicture LONGBLOB NOT NULL ,
+  gelPicture LONGBLOB NULL ,
   filename VARCHAR(255) NOT NULL DEFAULT '',
   date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   PRIMARY KEY (imageID) )
@@ -1632,6 +1632,29 @@ CREATE  TABLE IF NOT EXISTS imagePerson (
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT fk_imagePerson_imageID
+    FOREIGN KEY (imageID )
+    REFERENCES image (imageID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table imageProject
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS imageProject ;
+
+CREATE  TABLE IF NOT EXISTS imageProject (
+  imageID int(11) NOT NULL ,
+  projectID int(11) NOT NULL ,
+  INDEX ndx_imageProject_projectID (projectID ASC) ,
+  INDEX ndx_imageProject_imageID (imageID ASC) ,
+  CONSTRAINT fk_imageProject_projectID
+    FOREIGN KEY (projectID )
+    REFERENCES project (projectID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_imageProject_imageID
     FOREIGN KEY (imageID )
     REFERENCES image (imageID )
     ON DELETE CASCADE
