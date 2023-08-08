@@ -4235,6 +4235,68 @@ BEGIN
 END$$
 
 
+-- new autoflowGMPReportEsignHistory record
+DROP PROCEDURE IF EXISTS new_gmp_review_history_record$$
+CREATE PROCEDURE new_gmp_review_history_record ( p_personGUID  CHAR(36),
+                                       	       p_password      VARCHAR(80),
+                                       	       p_ID            INT )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowGMPReportEsignHistory SELECT * FROM autoflowGMPReportEsign WHERE ID = p_ID;
+    
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- DELETE  autoflowGMPReportEsign record by ID 
+DROP PROCEDURE IF EXISTS delete_gmp_review_record_by_id$$
+CREATE PROCEDURE delete_gmp_review_record_by_id ( p_personGUID    CHAR(36),
+                                     	      	p_password      VARCHAR(80),
+                			      	p_ID            INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;	
+  
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    
+    -- Find out if record exists for associated runID 
+    SELECT COUNT(*) INTO count_records 
+    FROM  autoflowGMPReportEsign
+    WHERE ID = p_ID;
+
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'Record cannot be deleted as it does not exist for current experiment run';   
+
+    ELSE
+      DELETE FROM autoflowGMPReportEsign
+      WHERE ID = p_ID;
+    
+    END IF;
+
+  END IF;
+      
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
 
 -- Update autoflowGMPReportEsign record by ADMIN assigner
 DROP PROCEDURE IF EXISTS update_gmp_review_record_by_admin$$

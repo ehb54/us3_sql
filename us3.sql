@@ -195,6 +195,24 @@ CREATE TABLE IF NOT EXISTS autoflowGMPReportEsign (
 ENGINE = InnoDB; 
 
 
+-- -----------------------------------------------------
+-- Table autoflowGMPReportEsignHistory
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS autoflowGMPReportEsignHistory;
+CREATE TABLE IF NOT EXISTS autoflowGMPReportEsignHistory (
+  ID                   INT(11)   NOT NULL UNIQUE,
+  autoflowID           INT(11)   NOT NULL UNIQUE,
+  autoflowName         VARCHAR(300)  NULL,
+  operatorListJson     json,
+  reviewersListJson    json,
+  eSignStatusJson      json,
+  eSignStatusAll       ENUM ('NO','YES') NOT NULL,
+  createUpdateLogJson  json,
+  data                 LONGBLOB NULL,
+PRIMARY KEY (ID) )
+ENGINE = InnoDB; 
+
+
 -----------------------------------------------------
 -- Table autoflowFailed --
 -----------------------------------------------------
