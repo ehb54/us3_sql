@@ -4238,7 +4238,7 @@ BEGIN
 END$$
 
 
--- new autoflowGMPReportEsignHistory record
+--- new autoflowGMPReportEsignHistory record
 DROP PROCEDURE IF EXISTS new_gmp_review_history_record$$
 CREATE PROCEDURE new_gmp_review_history_record ( p_personGUID  CHAR(36),
                                        	       p_password      VARCHAR(80),
