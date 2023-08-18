@@ -3967,7 +3967,7 @@ DROP PROCEDURE IF EXISTS upload_gmpReportData_html$$
 CREATE PROCEDURE  upload_gmpReportData_html( p_personGUID   CHAR(36),
                                              p_password     VARCHAR(80),
                                              p_gmpReportID  INT,
-                                             p_htmlData     BLOB,
+                                             p_htmlData     LONGBLOB,
                                              p_checksum     CHAR(33) )
   MODIFIES SQL DATA
 
