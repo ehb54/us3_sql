@@ -4196,6 +4196,51 @@ BEGIN
 
 END$$
 
+----- Returns complete information about autoflowGMPReportEsignHistory record by autoflowID
+DROP PROCEDURE IF EXISTS get_gmp_review_info_by_autoflowID_history$$
+CREATE PROCEDURE get_gmp_review_info_by_autoflowID_history( p_personGUID    CHAR(36),
+                                       		    	    p_password      VARCHAR(80),
+                                       		    	    p_ID            INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowGMPReportEsignHistory
+  WHERE      autoflowID = p_ID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, autoflowID, autoflowName, operatorListJson, reviewersListJson,
+      	       eSignStatusJson, eSignStatusAll, createUpdateLogJson, approversListJson,
+	       smeListJson
+      FROM     autoflowGMPReportEsignHistory
+      WHERE    autoflowID = p_ID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
 ----- new autoflowGMPReportEsign record ---------------------------------
 DROP PROCEDURE IF EXISTS new_gmp_review_record$$
 CREATE PROCEDURE  new_gmp_review_record ( p_personGUID   CHAR(36),
