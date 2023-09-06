@@ -3261,7 +3261,7 @@ BEGIN
       SELECT   importRI, importRIts, importIP, importIPts,
                editRI, editRIts, editIP, editIPts, analysis,
 	       stopOptima, stopOptimats, skipOptima, skipOptimats,
-	       analysisCancel
+	       analysisCancel, createdGMPrun, createdGMPrunts
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
