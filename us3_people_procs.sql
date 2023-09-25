@@ -159,7 +159,7 @@ BEGIN
                fname AS firstName,
                organization
       FROM     people
-      WHERE    gmpReviewer = 1
+      WHERE    gmpReviewerRole = 'REVIEWER'
       ORDER BY lname;
 
     ELSE
@@ -172,7 +172,7 @@ BEGIN
                fname AS firstName,
                organization
       FROM     people
-      WHERE    (gmpReviewer = 1)
+      WHERE    (gmpReviewerRole = 'REVIEWER')
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -216,7 +216,7 @@ BEGIN
                fname AS firstName,
                organization
       FROM     people
-      WHERE    gmpApprover = 1
+      WHERE    gmpReviewerRole = 'APPROVER'
       ORDER BY lname;
 
     ELSE
@@ -229,7 +229,7 @@ BEGIN
                fname AS firstName,
                organization
       FROM     people
-      WHERE    (gmpApprover = 1)
+      WHERE    (gmpReviewerRole = 'APPROVER')
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -275,7 +275,7 @@ BEGIN
                organization,
 	       userlevel
       FROM     people
-      WHERE    gmpReviewer = 0 AND gmpApprover = 0
+      WHERE    gmpReviewerRole = 'NONE'
       ORDER BY lname;
 
     ELSE
@@ -289,7 +289,7 @@ BEGIN
                organization,
 	       userlevel
       FROM     people
-      WHERE    (gmpReviewer = 0 AND gmpApprover = 0)
+      WHERE    (gmpReviewerRole = 'NONE')
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -349,8 +349,7 @@ BEGIN
                email,
                personGUID,
 	       userlevel,
-	       gmpReviewer,
-	       gmpApprover
+	       gmpReviewerRole
       FROM     people
       WHERE    personID = p_ID;
 
@@ -395,7 +394,7 @@ BEGIN
       SELECT @OK AS status;
 
       UPDATE   people
-      SET      gmpReviewer = 1 
+      SET      gmpReviewerRole = 'REVIEWER' 
       WHERE    personID = p_ID;
 
     END IF;
@@ -438,7 +437,7 @@ BEGIN
       SELECT @OK AS status;
 
       UPDATE   people
-      SET      gmpReviewer = 0 
+      SET      gmpReviewerRole = 'NONE' 
       WHERE    personID = p_ID;
 
     END IF;
@@ -481,7 +480,7 @@ BEGIN
       SELECT @OK AS status;
 
       UPDATE   people
-      SET      gmpApprover = 1 
+      SET      gmpReviewerRole = 'APPROVER' 
       WHERE    personID = p_ID;
 
     END IF;
@@ -524,7 +523,7 @@ BEGIN
       SELECT @OK AS status;
 
       UPDATE   people
-      SET      gmpApprover = 0 
+      SET      gmpReviewerRole = 'NONE' 
       WHERE    personID = p_ID;
 
     END IF;
