@@ -4251,7 +4251,6 @@ CREATE PROCEDURE  new_gmp_review_record ( p_personGUID   CHAR(36),
                                          p_revListJson  TEXT,
 					 p_apprListJson TEXT,
 					 p_smeListJson  TEXT,
-                                         p_eSignJson    TEXT,
                                          p_logJson      TEXT )
 
   MODIFIES SQL DATA
@@ -4271,7 +4270,6 @@ BEGIN
        reviewersListJson   = p_revListJson,
        approversListJson   = p_apprListJson,
        smeListJson         = p_smeListJson,
-       eSignStatusJson     = p_eSignJson,
        createUpdateLogJson = p_logJson;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
