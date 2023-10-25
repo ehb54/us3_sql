@@ -280,6 +280,37 @@ BEGIN
 
 END$$
 
+
+-- Get rawDataGUID/ID based on filebase and triple combo
+DROP PROCEDURE IF EXISTS get_rawDataGUID_from_filename$$
+CREATE PROCEDURE get_rawDataGUID_from_filename ( p_personGUID       CHAR(36),
+                                    	       p_password           VARCHAR(80),
+                                    	       p_filebase_template  VARCHAR(200),
+					       p_triple_template    VARCHAR(10))
+
+  READS SQL DATA
+
+BEGIN
+  DECLARE template VARCHAR(250);
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET p_filebase_template  = TRIM( p_filebase_template );
+  SET p_triple_template    = TRIM( p_triple_template );
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+     SELECT @OK AS status;
+     SET template = CONCAT('%', p_filebase_template, '%', p_triple_template, '%');
+     
+     SELECT   rawDataID, rawDataGUID
+     FROM     rawData
+     WHERE    filename LIKE template;
+        
+  END IF;
+END$$
+
+
 -- Get a list of rawData descriptions that belong to this user (no cksum,size)
 DROP PROCEDURE IF EXISTS get_rawData_desc$$
 CREATE PROCEDURE get_rawData_desc ( p_personGUID   CHAR(36),
@@ -1474,7 +1505,7 @@ SET @DEBUG = CONCAT('Edited data ID = ', p_editedDataID,
 END$$
 
 -- Get a list of editedData filenames and editedDataIDs that correspond with this label
-DROP PROCEDURE IF EXISTS get_editedDataFilenamesID_forReport$$
+DROP PROCEDURE IF EXISTS get_editedDataFilenamesIDs_forReport$$
 CREATE PROCEDURE get_editedDataFilenamesIDs_forReport ( p_personGUID   CHAR(36),
                                  	      	       p_password     VARCHAR(80),
                                   	     	       p_label VARCHAR(80),
