@@ -2124,7 +2124,8 @@ CREATE FUNCTION new_report_item ( p_personGUID CHAR(36),
                                 p_intval      float,
                                 p_tolerance   float,
                                 p_percent     float,
-				p_combinedplot TINYINT )
+				p_combinedplot TINYINT,
+				p_ind_combinedplot TINYINT )
                                        
   RETURNS INT
   MODIFIES SQL DATA
@@ -2142,14 +2143,15 @@ BEGIN
     INSERT INTO autoflowReportItem SET
       reportGUID        = p_reportguid,
       reportID          = p_reportid,
-      type              = p_type,
+<      type              = p_type,
       method            = p_method,
       rangeLow          = p_low,	
       rangeHi           = p_hi,
       integration       = p_intval,
       tolerance         = p_tolerance,
       totalPercent      = p_percent,
-      combinedPlot      = p_combinedplot;
+      combinedPlot      = p_combinedplot,
+      indCombinedPlot   = p_ind_combinedplot;
      
     SELECT LAST_INSERT_ID() INTO reportitem_id;
 
@@ -2293,7 +2295,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   type, method, rangeLow, rangeHi, integration, tolerance, totalPercent, combinedPlot
+      SELECT   type, method, rangeLow, rangeHi, integration, tolerance,
+      	       totalPercent, combinedPlot, indCombinedPlot
       FROM     autoflowReportItem 
       WHERE    reportItemID = p_reportItemID;
 
