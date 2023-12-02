@@ -2143,7 +2143,7 @@ BEGIN
     INSERT INTO autoflowReportItem SET
       reportGUID        = p_reportguid,
       reportID          = p_reportid,
-<      type              = p_type,
+      type              = p_type,
       method            = p_method,
       rangeLow          = p_low,	
       rangeHi           = p_hi,
