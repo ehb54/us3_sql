@@ -24,18 +24,24 @@ CREATE FUNCTION check_filename_for_autoflow ( p_personGUID  CHAR(36),
 BEGIN
   DECLARE count_runs   INT;
   DECLARE count_runs_h INT;
+  DECLARE f_template   VARCHAR(300);
+
+  SET count_runs = 0;
+  SET count_runs_h = 0;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
+  SET f_template = CONCAT('%', p_filename, '%');
+
   SELECT COUNT(*) INTO count_runs 
   FROM autoflow 
-  WHERE filename = p_filename;
+  WHERE filename like f_template;
 
   SELECT COUNT(*) INTO count_runs_h
   FROM autoflowHistory
-  WHERE filename = p_filename;
+  WHERE filename like f_template;
 
 
   RETURN( count_runs + count_runs_h );
