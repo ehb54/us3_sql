@@ -2439,6 +2439,33 @@ BEGIN
 END$$
 
 
+-- Returns JSONs about ALL models processed at 5. ANALYSIS 
+DROP PROCEDURE IF EXISTS get_modelIDs_for_autoflow$$
+CREATE PROCEDURE get_modelIDs_for_autoflow ( p_personGUID    CHAR(36),
+                                           p_password      VARCHAR(80) )
+                                       	 
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+      SELECT @OK AS status;
+
+      SELECT   modelsDesc
+      FROM     autoflowModelsLink;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
 --- Get ID of the autoflowStatus record by autoflowID -----------------------------
 
 DROP FUNCTION IF EXISTS get_autoflowStatus_id$$
