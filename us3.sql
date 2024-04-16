@@ -412,7 +412,7 @@ CREATE  TABLE IF NOT EXISTS autoflowReportItem (
   reportItemID  int(11) NOT NULL AUTO_INCREMENT ,
   reportGUID    varchar(80) NOT NULL,
   reportID      int(11) NOT NULL,
-  type          enum ('s', 'D', 'f', 'f/f0', 'MW', 'Radius') NOT NULL,
+  type          enum ('s', 'D', 'f', 'f/f0', 'MW', 'Radius', 'vbar', 'Density') NOT NULL,
   method        enum ('2DSA-IT', 'PCSA-SL/DS/IS', '2DSA-MC', 'raw') NOT NULL,
   rangeLow      FLOAT NULL,
   rangeHi       FLOAT NULL,
