@@ -155,7 +155,8 @@ CREATE PROCEDURE add_autoflow_record ( p_personGUID  CHAR(36),
 				     p_label         VARCHAR(80),
 				     p_gmprun        VARCHAR(80),
 				     p_aprofileguid  VARCHAR(80),
-                                     p_operatorID    INT )
+                                     p_operatorID    INT,
+				     p_expType       VARCHAR(80) )
                                     
   MODIFIES SQL DATA
 
@@ -179,7 +180,8 @@ BEGIN
       created           = NOW(),
       gmpRun            = p_gmprun,
       aprofileGUID      = p_aprofileguid,
-      operatorID        = p_operatorID;
+      operatorID        = p_operatorID,
+      expType           = p_expType;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
