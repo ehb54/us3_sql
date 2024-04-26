@@ -114,6 +114,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   failedID    int(11) NULL,
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
+  expType enum('VELOCITY','ABDE') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -153,6 +154,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   failedID    int(11) NULL,
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
+  expType enum('VELOCITY','ABDE') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
