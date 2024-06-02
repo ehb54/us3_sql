@@ -356,10 +356,6 @@ BEGIN
 
     SET @EMAIL        = p_email;
 
-    SELECT CONCAT( 'authPAM : ', @authenticatePAM ) as log into outfile '/tmp/sqllog1';
-    SELECT CONCAT( '@USERNAME : ', @USERNAME ) as log into outfile '/tmp/sqllog2';
-    SELECT CONCAT( '@userNamePAM : ', @userNamePAM ) as log into outfile '/tmp/sqllog3';
-
     IF ( @USERLEVEL < 2 ) THEN
       -- disallow userlevel < 2
       SET @US3_LAST_ERRNO = @BADPASS;
