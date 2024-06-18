@@ -78,7 +78,7 @@ BEGIN
   SET @US3_ANALYST    = 2;
   SET @US3_ADMIN      = 3;
   SET @US3_SUPER      = 4;
-  
+
 END$$
 
 -- Returns the most recent error number
@@ -202,14 +202,49 @@ BEGIN
 
   ELSE
     /* At this point we should have exactly 1 record */
-    SELECT personID, password, fname, lname, phone, email, userlevel, activated
-    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @EMAIL, @USERLEVEL, activated
+    SELECT personID, password, fname, lname, phone, email, userlevel, activated, authenticatePAM, userNamePAM
+    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @EMAIL, @USERLEVEL, activated, @authenticatePAM, @userNamePAM
     FROM   people
     WHERE  personGUID = p_personGUID;
 
     SET @personGUID   = p_personGUID;
 
-    IF ( l_password != md5_pw ) THEN
+    IF ( @USERLEVEL < 2 ) THEN
+      -- disallow userlevel < 2
+      SET @US3_LAST_ERRNO = @BADPASS;
+      SET @US3_LAST_ERROR = 'MySQL: Invalid user level';
+
+      SET @US3_ID     = NULL;
+      SET @FNAME      = NULL;
+      SET @LNAME      = NULL;
+      SET @PHONE      = NULL;
+      SET @EMAIL      = NULL;
+      SET @personGUID = NULL;
+      SET @USERLEVEL  = NULL;
+
+      RETURN( @US3_LAST_ERRNO );
+
+    END IF;
+
+    IF ( @authenticatePAM = 1 AND @USERNAME != @userNamePAM ) THEN
+      -- for authenticatePAM users, the user name must match the userNamePAM
+      SET @US3_LAST_ERRNO = @BADPASS;
+      SET @US3_LAST_ERROR = 'MySQL: Invalid user name';
+
+      SET @US3_ID     = NULL;
+      SET @FNAME      = NULL;
+      SET @LNAME      = NULL;
+      SET @PHONE      = NULL;
+      SET @EMAIL      = NULL;
+      SET @personGUID = NULL;
+      SET @USERLEVEL  = NULL;
+
+      RETURN( @US3_LAST_ERRNO );
+
+    END IF;
+
+    IF ( @authenticatePAM != 1 AND l_password != md5_pw ) THEN
+      -- only check user email password if not authenticatePAM
       SET @US3_LAST_ERRNO = @BADPASS;
       SET @US3_LAST_ERROR = 'MySQL: Invalid password';
 
@@ -221,12 +256,20 @@ BEGIN
       SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
+      RETURN( @US3_LAST_ERRNO );
+
     ELSEIF ( activated = false ) THEN
       SET @US3_LAST_ERRNO = @INACTIVE;
-      SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
-                                    'Please activate your account first. ',
-                                    'The activation code was sent to your e-mail address: ',
-                                     p_email);
+      IF ( @authenticatePAM != 1 ) THEN
+         SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
+                                       'Please activate your account first. ',
+                                       'The activation code was sent to your e-mail address: ',
+                                        p_email);
+      ELSE
+         SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
+                                       'Please contact your administrator' );
+      END IF;      
+        
       SET @US3_ID     = NULL;
       SET @FNAME      = NULL;
       SET @LNAME      = NULL;
@@ -234,6 +277,8 @@ BEGIN
       SET @EMAIL      = NULL;
       SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
+  
+      RETURN( @US3_LAST_ERRNO );
 
     ELSE
       -- Successful login
@@ -245,7 +290,6 @@ BEGIN
       SET @US3_LAST_ERRNO = @OK;
 
     END IF;
-
   END IF;
 
   RETURN( @US3_LAST_ERRNO );
@@ -305,14 +349,49 @@ BEGIN
 
   ELSE
     -- At this point we should have exactly 1 record
-    SELECT personID, password, fname, lname, phone, personGUID, userlevel, activated
-    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @personGUID, @USERLEVEL, activated
+    SELECT personID, password, fname, lname, phone, personGUID, userlevel, activated, authenticatePAM, userNamePAM
+    INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @personGUID, @USERLEVEL, activated, @authenticatePAM, @userNamePAM
     FROM   people
     WHERE  email = p_email;
 
     SET @EMAIL        = p_email;
 
-    IF ( l_password != md5_pw ) THEN
+    IF ( @USERLEVEL < 2 ) THEN
+      -- disallow userlevel < 2
+      SET @US3_LAST_ERRNO = @BADPASS;
+      SET @US3_LAST_ERROR = 'MySQL: Invalid user level';
+
+      SET @US3_ID     = NULL;
+      SET @FNAME      = NULL;
+      SET @LNAME      = NULL;
+      SET @PHONE      = NULL;
+      SET @EMAIL      = NULL;
+      SET @personGUID = NULL;
+      SET @USERLEVEL  = NULL;
+
+      RETURN( @US3_LAST_ERRNO );
+
+    END IF;
+
+    IF ( @authenticatePAM = 1 AND @USERNAME != @userNamePAM ) THEN
+      -- for authenticatePAM users, the user name must match the userNamePAM
+      SET @US3_LAST_ERRNO = @BADPASS;
+      SET @US3_LAST_ERROR = 'MySQL: Invalid user name';
+
+      SET @US3_ID     = NULL;
+      SET @FNAME      = NULL;
+      SET @LNAME      = NULL;
+      SET @PHONE      = NULL;
+      SET @EMAIL      = NULL;
+      SET @personGUID = NULL;
+      SET @USERLEVEL  = NULL;
+
+      RETURN( @US3_LAST_ERRNO );
+
+    END IF;
+
+    IF ( @authenticatePAM != 1 AND l_password != md5_pw ) THEN
+      -- only check user email password if not authenticatePAM
       SET @US3_LAST_ERRNO = @BADPASS;
       SET @US3_LAST_ERROR = 'MySQL: Invalid password';
 
@@ -324,12 +403,18 @@ BEGIN
       SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
+      RETURN( @US3_LAST_ERRNO );
     ELSEIF ( activated = false ) THEN
       SET @US3_LAST_ERRNO = @INACTIVE;
-      SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
-                                    'Please activate your account first. ',
-                                    'The activation code was sent to your e-mail address: ',
-                                     p_email);
+      IF ( @authenticatePAM != 1 ) THEN
+         SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
+                                       'Please activate your account first. ',
+                                       'The activation code was sent to your e-mail address: ',
+                                        p_email);
+      ELSE
+       SET @US3_LAST_ERROR = CONCAT( 'MySQL: This account has not been activated yet. ',
+                                         'Please contact your administrator' );
+      END IF;      
       SET @US3_ID     = NULL;
       SET @FNAME      = NULL;
       SET @LNAME      = NULL;
@@ -338,6 +423,7 @@ BEGIN
       SET @personGUID = NULL;
       SET @USERLEVEL  = NULL;
 
+      RETURN( @US3_LAST_ERRNO );
     ELSE
       -- Successful login
       UPDATE people
@@ -351,7 +437,7 @@ BEGIN
 
   END IF;
 
-  RETURN( @US3_LSAST_ERRNO );
+  RETURN( @US3_LAST_ERRNO );
 
 END$$
 
