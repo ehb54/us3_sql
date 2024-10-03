@@ -208,7 +208,8 @@ CREATE PROCEDURE add_autoflow_record_datadisk  ( p_personGUID  CHAR(36),
                                      	       p_operatorID    INT,
 				     	       p_expType       VARCHAR(80),
 					       p_dataPath      VARCHAR(300),
-					       p_optimaname    VARCHAR(300) )
+					       p_optimaname    VARCHAR(300),
+					       p_dataSource    VARCHAR(80)  )
                                     
   MODIFIES SQL DATA
 
@@ -235,7 +236,8 @@ BEGIN
       dataPath          = p_dataPath,
       status            = 'EDITING',
       corrRadii         = 'NO',
-      optimaName        = p_optimaname;
+      optimaName        = p_optimaname,
+      dataSource        = p_dataSource;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
@@ -617,7 +619,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType, dataSource
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -662,7 +664,7 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType, dataSource
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
