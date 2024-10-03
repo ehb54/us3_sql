@@ -192,6 +192,60 @@ BEGIN
 END$$
 
 
+-- adds autoflow record for data disk
+DROP PROCEDURE IF EXISTS add_autoflow_record_datadisk$$
+CREATE PROCEDURE add_autoflow_record_datadisk  ( p_personGUID  CHAR(36),
+                                     	       p_password      VARCHAR(80),
+                                     	       p_protname      VARCHAR(80),
+                                     	       p_cellchnum     VARCHAR(80),
+                                     	       p_triplenum     VARCHAR(80),
+				     	       p_duration      INT,
+				     	       p_runname       VARCHAR(80),
+				     	       p_invID         INT,
+				     	       p_label         VARCHAR(80),
+				     	       p_gmprun        VARCHAR(80),
+				     	       p_aprofileguid  VARCHAR(80),
+                                     	       p_operatorID    INT,
+				     	       p_expType       VARCHAR(80),
+					       p_dataPath      VARCHAR(300),
+					       p_optimaname    VARCHAR(300) )
+                                    
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflow SET
+      protname          = p_protname,
+      cellChNum         = p_cellchnum,
+      tripleNum         = p_triplenum,
+      duration          = p_duration,
+      runName           = p_runname,
+      invID             = p_invID,
+      label		= p_label,
+      created           = NOW(),
+      gmpRun            = p_gmprun,
+      aprofileGUID      = p_aprofileguid,
+      operatorID        = p_operatorID,
+      expType           = p_expType,
+      dataPath          = p_dataPath,
+      status            = 'EDITING',
+      corrRadii         = 'NO',
+      optimaName        = p_optimaname;
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- adds autoflow record for ProtDev
 DROP PROCEDURE IF EXISTS add_autoflow_record_dev$$
 CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
