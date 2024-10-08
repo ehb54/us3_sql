@@ -1022,11 +1022,10 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import$$
 CREATE PROCEDURE update_autoflow_at_lims_import ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT,
-					  	p_filename      VARCHAR(300),
-                                                p_optima        VARCHAR(300),
+                                       	       	p_filename      VARCHAR(300),
                                                 p_intensityID   INT,
-						p_statusID      INT )
+						p_statusID      INT,
+						p_autoflowID    INT )
   MODIFIES SQL DATA  
 
 BEGIN
@@ -1039,7 +1038,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID AND optimaName = p_optima;
+  WHERE      ID = p_autoflowID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -1049,7 +1048,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      filename = p_filename, status = 'EDIT_DATA', intensityID = p_intensityID, statusID = p_statusID
-      WHERE    runID = p_runID AND optimaName = p_optima;
+      WHERE    ID = p_autoflowID;
 
     END IF;
 
@@ -1066,9 +1065,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_edit_data$$
 CREATE PROCEDURE update_autoflow_at_edit_data ( p_personGUID    CHAR(36),
                                              	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT,
-						p_analysisIDs   TEXT,
-                                                p_optima        VARCHAR(300) )
+                                       	   	p_analysisIDs   TEXT,
+                                                p_autoflowID    INT )
 					 
   MODIFIES SQL DATA  
 
@@ -1082,7 +1080,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID AND optimaName = p_optima;
+  WHERE      ID = p_autoflowID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -1092,7 +1090,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      status = 'ANALYSIS', analysisIDs = p_analysisIDs
-      WHERE    runID = p_runID AND optimaName = p_optima;
+      WHERE    ID = p_autoflowID;
 
     END IF;
 
@@ -1106,9 +1104,8 @@ END$$
 -- Update autoflow record with next stage at ANALYSIS (ANALYSIS  to REPORT)
 DROP PROCEDURE IF EXISTS update_autoflow_at_analysis$$
 CREATE PROCEDURE update_autoflow_at_analysis   ( p_personGUID    CHAR(36),
-                                             	p_password      VARCHAR(80),
-                                       	     	p_runID    	INT,
-                                                p_optima        VARCHAR(300)  )
+                                             	p_password       VARCHAR(80),
+                                                p_autoflowID     INT  )
 					 
   MODIFIES SQL DATA  
 
@@ -1122,7 +1119,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID AND optimaName = p_optima;
+  WHERE      ID = p_autoflowID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -1132,7 +1129,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      status = 'REPORT'
-      WHERE    runID = p_runID AND optimaName = p_optima;
+      WHERE    ID = p_autoflowID;
 
     END IF;
 
@@ -1146,8 +1143,7 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflow_at_report$$
 CREATE PROCEDURE update_autoflow_at_report   ( p_personGUID    CHAR(36),
                                                p_password      VARCHAR(80),
-                                       	       p_runID    	INT,
-                                               p_optima        VARCHAR(300)  )
+					       p_autoflowID     INT )		       
 					 
   MODIFIES SQL DATA  
 
@@ -1161,7 +1157,7 @@ BEGIN
   SELECT     COUNT(*)
   INTO       count_records
   FROM       autoflow
-  WHERE      runID = p_runID AND optimaName = p_optima;
+  WHERE      ID = p_autoflowID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_records = 0 ) THEN
@@ -1171,7 +1167,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      status = 'E-SIGNATURES'
-      WHERE    runID = p_runID AND optimaName = p_optima;
+      WHERE    ID = p_autoflowID;
 
     END IF;
 
