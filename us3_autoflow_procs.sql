@@ -3116,7 +3116,7 @@ BEGIN
   FROM       autoflowStatus
   WHERE     ID = p_ID AND autoflowID = p_autoflowID;
   
-  SELECT concat( p_AnalysisAction, '; ', DATE_FORMAT(NOW(), '%Y-%m-%d %h:%i:%s'))
+  SELECT concat( p_AnalysisAction, '; ', DATE_FORMAT(timestamp2UTC( NOW() ), '%Y-%m-%d %H:%i:%s'))
   INTO   p_AnalysisAction_plus_date;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
@@ -3127,7 +3127,7 @@ BEGIN
     ELSE
       IF ( analysis_json IS NULL ) THEN 
         UPDATE   autoflowStatus
-        SET      analysis  = JSON_OBJECT(p_AnalysisTriple, p_AnalysisAction_plus_date)
+        SET      analysis  = JSON_OBJECT(p_AnalysisTriple, p_AnalysisAction_plus_date )
         WHERE    ID = p_ID AND autoflowID = p_autoflowID;
 
       ELSE
@@ -3177,7 +3177,7 @@ BEGIN
   FROM       autoflowStatus
   WHERE     ID = p_ID AND autoflowID = p_autoflowID;
   
-  SELECT concat( p_CancelAction, '; ', DATE_FORMAT(NOW(), '%Y-%m-%d %h:%i:%s'))
+  SELECT concat( p_CancelAction, '; ', DATE_FORMAT(timestamp2UTC( NOW() ), '%Y-%m-%d %H:%i:%s'))
   INTO   p_CancelAction_plus_date;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
@@ -3188,12 +3188,12 @@ BEGIN
     ELSE
       IF ( analysisCancel_json IS NULL ) THEN 
         UPDATE   autoflowStatus
-        SET      analysisCancel  = JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date)
+        SET      analysisCancel  = JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date )
         WHERE    ID = p_ID AND autoflowID = p_autoflowID;
 
       ELSE
          UPDATE  autoflowStatus
-         SET     analysisCancel = JSON_ARRAY_APPEND(analysisCancel, '$', JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date))
+         SET     analysisCancel = JSON_ARRAY_APPEND(analysisCancel, '$', JSON_OBJECT(p_CancelTriples, p_CancelAction_plus_date ))
          WHERE   ID = p_ID AND autoflowID = p_autoflowID;
 
       END IF;
@@ -3296,10 +3296,10 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   importRI, importRIts, importIP, importIPts,
-               editRI, editRIts, editIP, editIPts, analysis,
-	       stopOptima, stopOptimats, skipOptima, skipOptimats,
-	       analysisCancel, createdGMPrun, createdGMPrunts
+      SELECT   importRI, timestamp2UTC( importRIts ), importIP, timestamp2UTC( importIPts ),
+               editRI, timestamp2UTC( editRIts ), editIP, timestamp2UTC( editIPts ), analysis,
+	       stopOptima, timestamp2UTC( stopOptimats ), skipOptima, timestamp2UTC( skipOptimats ),
+	       analysisCancel, createdGMPrun, timestamp2UTC( createdGMPrunts )
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
