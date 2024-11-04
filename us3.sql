@@ -117,7 +117,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
-  dataSource enum ('INSTRUMENT','dataDiskAUC') NOT NULL,
+  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -158,7 +158,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
-  dataSource enum ('INSTRUMENT','dataDiskAUC') NOT NULL,
+  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
