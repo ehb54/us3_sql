@@ -619,7 +619,8 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType, dataSource
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType,
+	       dataSource, opticsFailedType
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -664,7 +665,8 @@ BEGIN
       SELECT   protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
-               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType, dataSource
+               intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType,
+	       dataSource, opticsFailedType
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
@@ -1006,6 +1008,46 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      expAborted = 'YES', statusID = p_statusID
+      WHERE    runID = p_runID AND optimaName = p_optima;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Update autoflow record with opticsFailedType(s) at LIVE_UPDATE
+DROP PROCEDURE IF EXISTS update_autoflow_at_live_update_optics_types_failed$$
+CREATE PROCEDURE update_autoflow_at_live_update_optics_types_failed( p_personGUID      CHAR(36),
+                                             			    p_password         VARCHAR(80),
+								    p_opticsFailedType VARCHAR(300),
+                                       	     			    p_runID    	       INT,
+                                                		    p_optima           VARCHAR(300) )
+					 
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      runID = p_runID AND optimaName = p_optima;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      opticsFailedType = p_opticsFailedType
       WHERE    runID = p_runID AND optimaName = p_optima;
 
     END IF;
