@@ -118,6 +118,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
   dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL DEFAULT 'INSTRUMENT',
+  opticsFailedType varchar(300) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -159,6 +160,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
   dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL DEFAULT 'INSTRUMENT',
+  opticsFailedType varchar(300) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
