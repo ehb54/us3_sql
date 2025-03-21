@@ -795,7 +795,8 @@ CREATE  TABLE IF NOT EXISTS solutionAnalyte (
     FOREIGN KEY (analyteID )
     REFERENCES analyte (analyteID )
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
+    ON UPDATE CASCADE,
+  PRIMARY KEY (solutionID, analyteID))
 ENGINE = InnoDB;
 
 
@@ -1029,7 +1030,8 @@ CREATE  TABLE IF NOT EXISTS bufferLink (
     FOREIGN KEY (bufferComponentID )
     REFERENCES bufferComponent (bufferComponentID )
     ON DELETE CASCADE
-    ON UPDATE CASCADE)
+    ON UPDATE CASCADE,
+  PRIMARY KEY (bufferID, bufferComponentID))
 ENGINE = InnoDB;
 
 
@@ -2258,7 +2260,8 @@ CREATE  TABLE IF NOT EXISTS experimentProtocol (
     FOREIGN KEY (experimentID )
     REFERENCES experiment (experimentID )
     ON DELETE NO ACTION
-    ON UPDATE CASCADE)
+    ON UPDATE CASCADE,
+  PRIMARY KEY (experimentID, protocolID))
 ENGINE = InnoDB;
 
 
