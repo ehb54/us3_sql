@@ -2749,6 +2749,67 @@ BEGIN
 END$$
 
 
+--- Create record in the autoflowAnalysisABDE table via EXPERIMENT's creation GMP run --------------
+DROP FUNCTION IF EXISTS new_autoflowAnalysisABDE_record$$
+CREATE FUNCTION new_autoflowAnalysisABDE_record( p_personGUID CHAR(36),
+                                                 p_password   VARCHAR(80),
+                                                 p_autoflowID int(11),
+                                                 p_etypeABDE  TEXT )
+
+  RETURNS INT
+  MODIFIES SQL DATA
+
+BEGIN
+
+  DECLARE record_id INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowAnalysisABDE SET
+      autoflowID        = p_autoflowID,
+      etype             = p_etypeABDE;
+
+    SELECT LAST_INSERT_ID() INTO record_id;
+
+  END IF;
+
+  RETURN( record_id );
+
+END$$
+
+
+-- add autoflowAnalysisABDEStages record
+DROP PROCEDURE IF EXISTS new_autoflowAnalyisABDEstages_record$$
+CREATE PROCEDURE new_autoflowAnalyisABDEstages_record ( p_personGUID  CHAR(36),
+                                                      p_password      VARCHAR(80),
+                                                      p_id      INT )
+
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    INSERT INTO autoflowAnalysisABDEStages SET
+      autoflowID        = p_id;
+
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 --- Create record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event--------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusStopOptima_record$$

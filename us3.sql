@@ -344,7 +344,7 @@ CREATE  TABLE IF NOT EXISTS autoflowModelsLink (
 
 
 -----------------------------------------------------
--- Table autoflowAnalysisStages --
+-- Table autoflowStages --
 -----------------------------------------------------
 DROP TABLE IF EXISTS autoflowStages;
 
@@ -432,6 +432,32 @@ CREATE  TABLE IF NOT EXISTS autoflowReportItem (
   PRIMARY KEY (reportItemID) )
 ENGINE = InnoDB;
 
+-----------------------------------------------------
+-- Table autoflowAnalysisABDE --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowAnalysisABDE;
+
+CREATE TABLE autoflowAnalysisABDE (
+  ID                int(11)      NOT NULL AUTO_INCREMENT,
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  etype             enum ('SWL','MWL','MIXED')  NOT NULL, 
+  xNormPercent      json,
+  
+  PRIMARY KEY (ID)
+  ) ENGINE=InnoDB;
+
+
+-----------------------------------------------------
+-- Table autoflowAnalysisABDEStages --
+-----------------------------------------------------
+DROP TABLE IF EXISTS autoflowAnalysisABDEStages;
+
+CREATE TABLE autoflowAnalysisABDEStages (
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  analysisABDE      text         DEFAULT "unknown",
+
+  PRIMARY KEY (autoflowID)
+  ) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
