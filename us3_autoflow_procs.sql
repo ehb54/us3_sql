@@ -2782,6 +2782,49 @@ BEGIN
 END$$
 
 
+-- read autoflowAnalysisABDE  reacord
+DROP PROCEDURE IF EXISTS read_autoflowAnalysisABDE_record$$
+CREATE PROCEDURE read_autoflowAnalysisABDE_record ( p_personGUID    CHAR(36),
+                                       		  p_password     VARCHAR(80),
+                                       		  p_autoflowID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisABDE
+  WHERE      autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   ID, etype, xNormPercent
+      FROM     autoflowAnalysisABDE
+      WHERE    autoflowID = p_autoflowID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
 -- add autoflowAnalysisABDEStages record
 DROP PROCEDURE IF EXISTS new_autoflowAnalyisABDEstages_record$$
 CREATE PROCEDURE new_autoflowAnalyisABDEstages_record ( p_personGUID  CHAR(36),
