@@ -265,6 +265,8 @@ CREATE TABLE autoflowStatus (
   analysisCancel    json,
   createdGMPrun     json,
   createdGMPrunts   timestamp    NULL,
+  analysisABDE      json,
+  analysisABDEts    timestamp    NULL,
 
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;
