@@ -2849,10 +2849,11 @@ END$$
 
 --- Create record in the autoflowAnalysisABDE table via EXPERIMENT's creation GMP run --------------
 DROP FUNCTION IF EXISTS new_autoflowAnalysisABDE_record$$
-CREATE FUNCTION new_autoflowAnalysisABDE_record( p_personGUID CHAR(36),
-                                                 p_password   VARCHAR(80),
-                                                 p_autoflowID int(11),
-                                                 p_etypeABDE  TEXT )
+CREATE FUNCTION new_autoflowAnalysisABDE_record( p_personGUID   CHAR(36),
+                                                 p_password     VARCHAR(80),
+                                                 p_autoflowID   int(11),
+                                                 p_etypeABDE    TEXT,
+						 p_filename_blc TEXT)
 
   RETURNS INT
   MODIFIES SQL DATA
@@ -2869,7 +2870,8 @@ BEGIN
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO autoflowAnalysisABDE SET
       autoflowID        = p_autoflowID,
-      etype             = p_etypeABDE;
+      etype             = p_etypeABDE,
+      filename_blc      = p_filename_blc;
 
     SELECT LAST_INSERT_ID() INTO record_id;
 
@@ -2909,7 +2911,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   ID, etype, xNormPercent
+      SELECT   ID, etype, xNormPercent, filename_blc
       FROM     autoflowAnalysisABDE
       WHERE    autoflowID = p_autoflowID;
 
@@ -2927,7 +2929,8 @@ END$$
 DROP PROCEDURE IF EXISTS update_autoflowAnalysisABDE_record$$
 CREATE PROCEDURE update_autoflowAnalysisABDE_record ( p_personGUID    CHAR(36),
                                              	    p_password      VARCHAR(80),
-                                       	       	    p_xNormPercent  TEXT,		  
+                                       	       	    p_xNormPercent  TEXT,
+						    p_filename_blc  TEXT,
 						    p_autoflowID    INT )
   MODIFIES SQL DATA  
 
@@ -2950,7 +2953,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflowAnalysisABDE
-      SET      xNormPercent = p_xNormPercent
+      SET      xNormPercent = p_xNormPercent, filename_blc = p_filename_blc
       WHERE    autoflowID = p_autoflowID;
 
     END IF;

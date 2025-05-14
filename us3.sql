@@ -444,7 +444,8 @@ CREATE TABLE autoflowAnalysisABDE (
   autoflowID        int(11)      NOT NULL UNIQUE,
   etype             enum ('SWL','MWL','MIXED')  NOT NULL, 
   xNormPercent      json,
-  
+  filename_blc      json,
+
   PRIMARY KEY (ID)
   ) ENGINE=InnoDB;
 
