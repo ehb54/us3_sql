@@ -3678,7 +3678,8 @@ BEGIN
       SELECT   importRI, timestamp2UTC( importRIts ), importIP, timestamp2UTC( importIPts ),
                editRI, timestamp2UTC( editRIts ), editIP, timestamp2UTC( editIPts ), analysis,
 	       stopOptima, timestamp2UTC( stopOptimats ), skipOptima, timestamp2UTC( skipOptimats ),
-	       analysisCancel, createdGMPrun, timestamp2UTC( createdGMPrunts )
+	       analysisCancel, createdGMPrun, timestamp2UTC( createdGMPrunts ),
+	       analysisABDE, timestamp2UTC( analysisABDEts )
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 
