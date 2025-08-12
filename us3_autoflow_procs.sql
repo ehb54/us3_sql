@@ -2852,8 +2852,7 @@ DROP FUNCTION IF EXISTS new_autoflowAnalysisABDE_record$$
 CREATE FUNCTION new_autoflowAnalysisABDE_record( p_personGUID   CHAR(36),
                                                  p_password     VARCHAR(80),
                                                  p_autoflowID   int(11),
-                                                 p_etypeABDE    TEXT,
-						 p_filename_blc TEXT)
+                                                 p_etypeABDE    TEXT )
 
   RETURNS INT
   MODIFIES SQL DATA
@@ -2870,8 +2869,7 @@ BEGIN
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO autoflowAnalysisABDE SET
       autoflowID        = p_autoflowID,
-      etype             = p_etypeABDE,
-      filename_blc      = p_filename_blc;
+      etype             = p_etypeABDE;
 
     SELECT LAST_INSERT_ID() INTO record_id;
 
