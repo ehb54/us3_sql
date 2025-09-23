@@ -544,7 +544,7 @@ BEGIN
 
   DECLARE desc_pattern VARCHAR(254);	
   CALL config();
-  SET desc_pattern = CONCAT( p_description, '%2DSA-FM%' );
+  SET desc_pattern = CONCAT( p_description, '%2DSA%FM%' );
   
 
   SET @US3_LAST_ERRNO = @OK;
