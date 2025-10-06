@@ -117,7 +117,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
-  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL DEFAULT 'INSTRUMENT',
+  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance','dataDiskAUC:PseudoAbsorbance') NOT NULL DEFAULT 'INSTRUMENT',
   opticsFailedType varchar(300) NULL,
 
   PRIMARY KEY (ID) )
@@ -159,7 +159,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   devRecord   enum('NO', 'YES', 'Processed') NOT NULL,
   gmpReviewID int(11) NULL,
   expType enum('VELOCITY','ABDE') NOT NULL,
-  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance') NOT NULL DEFAULT 'INSTRUMENT',
+  dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance','dataDiskAUC:PseudoAbsorbance') NOT NULL DEFAULT 'INSTRUMENT',
   opticsFailedType varchar(300) NULL,
 
   PRIMARY KEY (ID) )
