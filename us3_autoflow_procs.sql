@@ -262,7 +262,11 @@ CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
 					  p_invID         INT,
 					  p_label         VARCHAR(80),
 					  p_aprofileguid  VARCHAR(80),
-					  p_operatorID    INT )
+					  p_operatorID    INT,
+					  p_expType       TEXT,
+					  p_dataPath      VARCHAR(300),
+					  p_dataSource    TEXT,
+					  p_status	  TEXT )
                                     
   MODIFIES SQL DATA
 
@@ -272,6 +276,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
+  IF (p_dataPath = '') THEN SET p_dataPath = NULL; END IF;
+  
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO autoflow SET
       protname          = p_protname,
@@ -287,7 +293,11 @@ BEGIN
       gmpRun            = 'YES',
       aprofileGUID      = p_aprofileguid,
       operatorID        = p_operatorID,
-      devRecord         = 'YES';
+      devRecord         = 'YES',
+      expType           = p_expType,
+      dataPath          = p_dataPath,
+      dataSource        = p_dataSource,
+      status            = p_status;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
