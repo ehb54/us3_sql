@@ -248,6 +248,7 @@ BEGIN
 END$$
 
 
+
 -- adds autoflow record for ProtDev
 DROP PROCEDURE IF EXISTS add_autoflow_record_dev$$
 CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
@@ -262,8 +263,13 @@ CREATE PROCEDURE add_autoflow_record_dev ( p_personGUID  CHAR(36),
 					  p_invID         INT,
 					  p_label         VARCHAR(80),
 					  p_aprofileguid  VARCHAR(80),
-					  p_operatorID    INT )
-                                    
+					  p_operatorID    INT,
+					  p_expType       TEXT,
+					  p_dataPath      VARCHAR(300),
+					  p_dataSource    TEXT,
+					  p_status	  TEXT,
+					  p_filenameProtDev VARCHAR(300) )
+					                                      
   MODIFIES SQL DATA
 
 BEGIN
@@ -272,6 +278,9 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
+  IF (p_dataPath = '') THEN SET p_dataPath = NULL; END IF;
+  IF (p_filenameProtDev = '') THEN SET p_filenameProtDev = NULL; END IF;
+  
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     INSERT INTO autoflow SET
       protname          = p_protname,
@@ -287,8 +296,13 @@ BEGIN
       gmpRun            = 'YES',
       aprofileGUID      = p_aprofileguid,
       operatorID        = p_operatorID,
-      devRecord         = 'YES';
-
+      devRecord         = 'YES',
+      expType           = p_expType,
+      dataPath          = p_dataPath,
+      dataSource        = p_dataSource,
+      status            = p_status,
+      filenameProtDevDataDisk = p_filenameProtDev;
+      
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
   END IF;
@@ -620,7 +634,7 @@ BEGIN
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
                intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType,
-	       dataSource, opticsFailedType
+	       dataSource, opticsFailedType, filenameProtDevDataDisk
       FROM     autoflow 
       WHERE    ID = p_autoflowID;
 
@@ -666,7 +680,7 @@ BEGIN
       	       runID, status, dataPath, optimaName, runStarted, invID, created, 
 	       corrRadii, expAborted, label, gmpRun, filename, aprofileGUID, analysisIDs,
                intensityID, statusID, failedID, operatorID, devRecord, gmpReviewID, expType,
-	       dataSource, opticsFailedType
+	       dataSource, opticsFailedType, filenameProtDevDataDisk
       FROM     autoflowHistory 
       WHERE    ID = p_autoflowID;
 
@@ -1100,6 +1114,50 @@ BEGIN
 
 END$$
 
+
+-- Update autoflow record with next stage && filename at EDITING (LIMS IMPORT: dataDisk)
+DROP PROCEDURE IF EXISTS update_autoflow_at_lims_import_dataDisk$$
+CREATE PROCEDURE update_autoflow_at_lims_import_dataDisk ( p_personGUID    CHAR(36),
+                                             		 p_password      VARCHAR(80),
+                                       	       		 p_filename      VARCHAR(300),
+                                                	 p_intensityID   INT,
+							 p_statusID      INT,
+							 p_autoflowID    INT )
+  MODIFIES SQL DATA  
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflow
+  WHERE      ID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflow
+      SET      filename = p_filename,
+      	       filenameProtDevDataDisk = p_filename
+      	       status = 'EDIT_DATA',
+	       intensityID = p_intensityID,
+	       statusID = p_statusID
+      WHERE    ID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
 
 
 
