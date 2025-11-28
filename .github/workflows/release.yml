@@ -1,101 +1,59 @@
 # ===========================================================
-#  SAFE TEST VERSION of the bump workflow
-#  For use on a feature branch ONLY.
+#  us3_sql Release Wrapper
 #
-#  Differences from final version:
-#    - No guard for main
-#    - Works on the current branch (github.ref)
-#    - Tags are "test-vX.Y.Z" (won’t pollute real versions)
-#    - Safe with dry-run until ready
+#  PURPOSE:
+#    This workflow provides a UI in *this* repo (us3_sql)
+#    to set a version and create a tag by calling the
+#    reusable workflow defined in:
+#
+#      ehb54/aucsol_playbooks/.github/workflows/set-version-tag.yml
+#
+#  HOW IT WORKS:
+#    - You run this from the Actions tab in us3_sql
+#    - It asks for:
+#        - version          (free text, e.g. 4.1.2-RC1)
+#        - perform_release  (dropdown: test vs real release)
+#    - It then calls the shared workflow and passes those values.
+#
+#  REQUIREMENTS:
+#    - The repo ehb54/aucsol_playbooks must contain:
+#        .github/workflows/set-version-tag.yml
+#      on the branch you reference (main).
+#    - That workflow must define `on: workflow_call` with:
+#        inputs.version
+#        inputs.perform_release
 # ===========================================================
 
-name: TEST - Bump version and create tag
+name: Set version and create tag
 
 on:
+  # Manual trigger from GitHub Actions UI
   workflow_dispatch:
     inputs:
-      release_type:
-        description: "major | minor | patch"
+      version:
+        description: "Enter version (e.g., 4.1.2, 4.1.2-RC1)"
         required: true
-        default: "patch"
-      dry_run:
-        description: "TRUE = do not push commit or tag"
-        required: true
-        default: "true"
+        type: string
 
-permissions:
-  contents: write
+      perform_release:
+        description: "Perform actual release? (commit + tag)"
+        required: true
+        type: choice
+        options:
+          - "No (test only)"        # Safe dry-run (no commit, no tag)
+          - "Yes (commit + tag)"    # Real release
+        default: "No (test only)"
 
 jobs:
-  bump-and-tag:
-    runs-on: ubuntu-latest
-    steps:
+  call-set-version-tag:
+    # Call the reusable workflow in ehb54/aucsol_playbooks
+    #
+    # Syntax: owner/repo/.github/workflows/file.yml@ref
+    #
+    uses: ehb54/aucsol_playbooks/.github/workflows/set-version-tag.yml@main
 
-      # -------------------------------------------------------
-      # Checkout branch that triggered workflow
-      # -------------------------------------------------------
-      - name: Checkout triggering branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.ref }}
-
-      # -------------------------------------------------------
-      # Same logic as the real workflow...
-      # -------------------------------------------------------
-      - name: Get latest tag on this branch
-        id: get_tag
-        run: |
-          TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "Latest tag: $TAG"
-
-      - name: Calculate next version
-        id: calc
-        run: |
-          TAG="${{ steps.get_tag.outputs.tag }}"
-          BASE=${TAG#v}
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$BASE"
-
-          case "${{ github.event.inputs.release_type }}" in
-            major) MAJOR=$((MAJOR+1)); MINOR=0; PATCH=0 ;;
-            minor) MINOR=$((MINOR+1)); PATCH=0 ;;
-            patch) PATCH=$((PATCH+1)) ;;
-          esac
-
-          NEXT="${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=$NEXT" >> "$GITHUB_OUTPUT"
-
-      - name: Update VERSION
-        run: |
-          echo "${{ steps.calc.outputs.version }}" > VERSION
-          echo "VERSION updated to: $(cat VERSION)"
-
-      - name: Configure Git identity
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Commit change (dry-run aware)
-        if: github.event.inputs.dry_run == 'false'
-        run: |
-          git add VERSION
-          git commit -m "TEST bump VERSION to ${{ steps.calc.outputs.version }}" || true
-
-      - name: Push commit back to current branch
-        if: github.event.inputs.dry_run == 'false'
-        run: |
-          git push origin HEAD
-
-      # -------------------------------------------------------
-      # Tag: prefix "test-v" so it doesn’t conflict with real tags
-      # -------------------------------------------------------
-      - name: Create & push TEST tag
-        if: github.event.inputs.dry_run == 'false'
-        run: |
-          VERSION="${{ steps.calc.outputs.version }}"
-          TAG="test-v${VERSION}"
-
-          git tag "$TAG"
-          git push origin "$TAG"
-          echo "Created test tag: $TAG"
+    with:
+      # Pass the inputs from this workflow_dispatch
+      # to the reusable workflow's `inputs.version` and `inputs.perform_release`.
+      version: ${{ github.event.inputs.version }}
+      perform_release: ${{ github.event.inputs.perform_release }}
