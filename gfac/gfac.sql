@@ -20,6 +20,7 @@ CREATE TABLE `analysis` (
 `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'Unique analysis job ID',
 `gfacID` varchar(80) DEFAULT NULL COMMENT 'Grid/cluster job identifier',
 `cluster` varchar(64) DEFAULT NULL COMMENT 'Target cluster name',
+`metaschedulerClusterExecuting` varchar(64) DEFAULT NULL COMMENT 'Metascheduler cluster',
 `us3_db` varchar(32) DEFAULT NULL COMMENT 'Institution database name',
 `autoflowAnalysisID` int(11) DEFAULT NULL COMMENT 'AutoFlow analysis ID if applicable',
 `stdout` longtext COMMENT 'Job standard output',
