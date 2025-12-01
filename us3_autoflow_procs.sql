@@ -769,7 +769,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
-      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename, operatorID, failedID  
+      	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename,
+	       operatorID, failedID, devRecord, dataSource, filenameProtDevDataDisk   
       FROM     autoflow
       WHERE    devRecord = "YES";
      
@@ -817,7 +818,7 @@ BEGIN
 
       SELECT   ID, protName, cellChNum, tripleNum, duration, runName, expID, 
       	       runID, status, dataPath, optimaName, runStarted, invID, created, gmpRun, filename,
-	       operatorID, failedID, devRecord   
+	       operatorID, failedID, devRecord, dataSource, filenameProtDevDataDisk   
       FROM     autoflowHistory;
      
     END IF;
@@ -1145,7 +1146,7 @@ BEGIN
     ELSE
       UPDATE   autoflow
       SET      filename = p_filename,
-      	       filenameProtDevDataDisk = p_filename
+      	       filenameProtDevDataDisk = p_filename,
       	       status = 'EDIT_DATA',
 	       intensityID = p_intensityID,
 	       statusID = p_statusID
