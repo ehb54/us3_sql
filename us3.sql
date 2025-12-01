@@ -119,6 +119,7 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   expType enum('VELOCITY','ABDE') NOT NULL,
   dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance','dataDiskAUC:PseudoAbsorbance') NOT NULL DEFAULT 'INSTRUMENT',
   opticsFailedType varchar(300) NULL,
+  filenameProtDevDataDisk varchar(300) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
@@ -161,6 +162,7 @@ CREATE  TABLE IF NOT EXISTS autoflowHistory (
   expType enum('VELOCITY','ABDE') NOT NULL,
   dataSource enum ('INSTRUMENT','dataDiskAUC','dataDiskAUC:Absorbance','dataDiskAUC:PseudoAbsorbance') NOT NULL DEFAULT 'INSTRUMENT',
   opticsFailedType varchar(300) NULL,
+  filenameProtDevDataDisk varchar(300) NULL,
 
   PRIMARY KEY (ID) )
   ENGINE = InnoDB;
