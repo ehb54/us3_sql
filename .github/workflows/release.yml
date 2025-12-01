@@ -1,0 +1,59 @@
+# ===========================================================
+#  us3_sql Release Wrapper
+#
+#  PURPOSE:
+#    This workflow provides a UI in *this* repo (us3_sql)
+#    to set a version and create a tag by calling the
+#    reusable workflow defined in:
+#
+#      ehb54/aucsol_playbooks/.github/workflows/set-version-tag.yml
+#
+#  HOW IT WORKS:
+#    - You run this from the Actions tab in us3_sql
+#    - It asks for:
+#        - version          (free text, e.g. 4.1.2-RC1)
+#        - perform_release  (dropdown: test vs real release)
+#    - It then calls the shared workflow and passes those values.
+#
+#  REQUIREMENTS:
+#    - The repo ehb54/aucsol_playbooks must contain:
+#        .github/workflows/set-version-tag.yml
+#      on the branch you reference (main).
+#    - That workflow must define `on: workflow_call` with:
+#        inputs.version
+#        inputs.perform_release
+# ===========================================================
+
+name: Set version and create tag
+
+on:
+  # Manual trigger from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Enter version (e.g., 4.1.2, 4.1.2-RC1)"
+        required: true
+        type: string
+
+      perform_release:
+        description: "Perform actual release? (commit + tag)"
+        required: true
+        type: choice
+        options:
+          - "No (test only)"        # Safe dry-run (no commit, no tag)
+          - "Yes (commit + tag)"    # Real release
+        default: "No (test only)"
+
+jobs:
+  call-set-version-tag:
+    # Call the reusable workflow in ehb54/aucsol_playbooks
+    #
+    # Syntax: owner/repo/.github/workflows/file.yml@ref
+    #
+    uses: ehb54/aucsol_playbooks/.github/workflows/set-version-tag.yml@main
+
+    with:
+      # Pass the inputs from this workflow_dispatch
+      # to the reusable workflow's `inputs.version` and `inputs.perform_release`.
+      version: ${{ github.event.inputs.version }}
+      perform_release: ${{ github.event.inputs.perform_release }}
