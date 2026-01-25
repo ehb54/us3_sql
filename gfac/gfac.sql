@@ -6,8 +6,8 @@
 -- =====================================================================
 
 CREATE DATABASE IF NOT EXISTS `gfac`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+  CHARACTER SET latin1
+  COLLATE latin1_swedish_ci;
 
 USE `gfac`;
 
@@ -30,7 +30,7 @@ CREATE TABLE `analysis` (
 `queue_msg` text COMMENT 'Queue system messages',
 `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last status update timestamp',
 PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='HPC analysis job tracking and results';
 
 -- =====================================================================
@@ -45,7 +45,7 @@ CREATE TABLE `cluster_status` (
 `status` enum('up','down','warn','unknown') DEFAULT 'up' COMMENT 'Cluster operational status',
 `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last status check timestamp',
 PRIMARY KEY (`cluster`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='HPC cluster status and availability monitoring';
 
 -- =====================================================================
@@ -59,5 +59,5 @@ CREATE TABLE `queue_messages` (
 `message` text COMMENT 'Queue system message content',
 `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Message timestamp',
 PRIMARY KEY (`messageID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='Queue system message log for job tracking';

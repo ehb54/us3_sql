@@ -6,8 +6,8 @@
 -- =====================================================================
 
 CREATE DATABASE IF NOT EXISTS `newus3`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+  CHARACTER SET latin1
+  COLLATE latin1_swedish_ci;
 
 USE `newus3`;
 
@@ -39,7 +39,7 @@ CREATE TABLE `metadata` (
 `status` enum('pending','denied','completed') DEFAULT 'pending' COMMENT 'Registration approval status',
 `updateTime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last update timestamp',
 PRIMARY KEY (`metadataID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='Institution registration and provisioning information';
 
 -- =====================================================================
@@ -67,5 +67,5 @@ CREATE TABLE `people` (
 `userlevel` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'Permission level (0=user, higher=admin)',
 PRIMARY KEY (`personID`),
 UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='User accounts and authentication';

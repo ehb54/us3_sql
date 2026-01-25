@@ -9,8 +9,8 @@
 
 -- Database creation (idempotent)
 CREATE DATABASE IF NOT EXISTS `uslims3_global`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+  CHARACTER SET latin1
+  COLLATE latin1_swedish_ci;
 
 USE `uslims3_global`;
 
@@ -29,7 +29,7 @@ CREATE TABLE `investigators` (
 `LastLogin` datetime DEFAULT NULL COMMENT 'Most recent login timestamp',
 `Userlevel` tinyint(4) DEFAULT '0' COMMENT 'User permission level (0=user, higher=admin)',
 PRIMARY KEY (`invGlobal_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='Global investigator registry across all institutions';
 
 -- =====================================================================
@@ -52,5 +52,5 @@ CREATE TABLE `submissions` (
 `SubmitterID` int(11) NOT NULL COMMENT 'User who submitted the job',
 `Submitter_Name` varchar(61) DEFAULT NULL COMMENT 'Submitter full name (denormalized)',
 PRIMARY KEY (`HPCGlobal_ID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='Global HPC job submission tracking and resource usage';
