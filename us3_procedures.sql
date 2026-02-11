@@ -453,12 +453,8 @@ BEGIN
   DECLARE status       INT;
 
   CALL config();
-  SET status = @OK;
 
-  IF ( @US3_ID IS NULL ) THEN
-    SET status = check_user( p_personGUID, p_password );
-
-  END IF;
+  SET status = check_user( p_personGUID, p_password );
 
   RETURN( status );
 
@@ -504,11 +500,7 @@ BEGIN
 
   CALL config();
 
-  SET status = @OK;
-  IF ( @US3_ID IS NULL ) THEN
-    SET status = check_user_email( p_email, p_password );
-
-  END IF;
+  SET status = check_user_email( p_email, p_password );
 
   RETURN( status );
 
