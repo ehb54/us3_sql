@@ -841,37 +841,74 @@ END$$
 
 -- Get model descriptions for editedDataID
 DROP PROCEDURE IF EXISTS get_modelDescsIDs$$
-CREATE PROCEDURE get_modelDescsIDs ( p_personGUID  CHAR(36),
-                                  p_password  VARCHAR(80),
-                                  p_editID    INT )
-  READS SQL DATA
+CREATE PROCEDURE get_modelDescsIDs( p_personGUID CHAR(36),
+                                    p_password VARCHAR(80),
+                                    p_editID INT )
+    READS SQL DATA
 
 BEGIN
-  DECLARE count_models INT;
+    DECLARE count_models INT;
 
-  CALL config();
-  SET @US3_LAST_ERRNO = @OK;
-  SET @US3_LAST_ERROR = '';
+    CALL config( );
+    SET @US3_LAST_ERRNO = @OK;
+    SET @US3_LAST_ERROR = '';
+    IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+        -- This is an admin; they can get info that belongs to others
+        SELECT COUNT( * ) AS C INTO count_models FROM model WHERE editedDataID = p_editID;
 
-  SELECT     COUNT(*)
-  INTO       count_models
-  FROM       model
-  WHERE      editedDataID = p_editID;
+        IF ( count_models = 0 ) THEN
+            SET @US3_LAST_ERRNO = @NOROWS;
+            SET @US3_LAST_ERROR = 'MySQL: no rows returned';
 
-  IF ( count_models = 0 ) THEN
-    SET @US3_LAST_ERRNO = @NOROWS;
-    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+            SELECT @US3_LAST_ERRNO AS status;
 
-    SELECT @US3_LAST_ERRNO AS status;
+        ELSE
+            SELECT @OK AS status;
 
-  ELSE
-    SELECT @OK AS status;
+            SELECT description, modelID, lastUpdated FROM model WHERE editedDataID = p_editID;
 
-    SELECT   description, modelID, lastUpdated
-    FROM     model
-    WHERE    editedDataID = p_editID;
-    
-  END IF;
+        END IF;
+    ELSEIF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+        -- Regular users can only get their own models
+        SELECT
+            COUNT( * ) AS C
+        INTO count_models
+        FROM
+            modelPerson,
+            model
+        WHERE
+              personID = @US3_ID
+          AND modelPerson.modelID = model.modelID
+          AND editedDataID = p_editID;
+
+
+        IF ( count_models = 0 ) THEN
+            SET @US3_LAST_ERRNO = @NOROWS;
+            SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+            SELECT @US3_LAST_ERRNO AS status;
+        ELSE
+            SELECT @OK AS status;
+
+            SELECT
+                description,
+                model.modelID,
+                lastUpdated
+            FROM
+                modelPerson,
+                model
+            WHERE
+                  personID = @US3_ID
+              AND modelPerson.modelID = model.modelID
+              AND editedDataID = p_editID;
+
+        END IF;
+    ELSE
+        SET @US3_LAST_ERRNO = @NOTPERMITTED;
+        SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this model';
+
+        SELECT @US3_LAST_ERRNO AS status;
+    END IF;
 
 END$$
 
