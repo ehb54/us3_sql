@@ -1279,7 +1279,7 @@ BEGIN
 END$$
 
 
--- - Create reacord in the autoflowAnalysis table ------------------------
+-- - Create record in the autoflowAnalysis table -------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_analysis_record$$
 CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
@@ -2568,7 +2568,7 @@ BEGIN
 
 END$$
 
--- - Create reacord in the autoflowIntensity table ------------------------
+-- - Create record in the autoflowIntensity table ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_intensity_record$$
 CREATE FUNCTION new_autoflow_intensity_record ( p_personGUID CHAR(36),
@@ -2939,7 +2939,7 @@ BEGIN
 END$$
 
 
--- read autoflowAnalysisABDE  reacord
+-- read autoflowAnalysisABDE record
 DROP PROCEDURE IF EXISTS read_autoflowAnalysisABDE_record$$
 CREATE PROCEDURE read_autoflowAnalysisABDE_record ( p_personGUID    CHAR(36),
                                        		  p_password     VARCHAR(80),
@@ -3750,7 +3750,7 @@ BEGIN
 END$$
 
 
--- Set AUTO_INCREMENT in autolfow to greater of:
+-- Set AUTO_INCREMENT in autoflow to greater of:
 -- current autoflow AUTO_INCREMENT
 -- max( ID ) of autoflowHistory
 DROP PROCEDURE IF EXISTS set_autoflow_auto_increment$$
@@ -3796,7 +3796,7 @@ BEGIN
 END$$
 
 
--- Set AUTO_INCREMENT in autolfowAnalysis to greater of:
+-- Set AUTO_INCREMENT in autoflowAnalysis to greater of:
 -- current autoflowAnalysis AUTO_INCREMENT
 -- max( requestID ) of autoflowAnalysisHistory
 DROP PROCEDURE IF EXISTS set_autoflowAnalysis_auto_increment$$
@@ -3843,7 +3843,7 @@ END$$
 
 
 -- ------------------------------------------------------------------------------------------------------------
--- -- stored procs related to autoflowFailed table, clearing autolfow fields, and exp./rawData-----------------
+-- -- stored procs related to autoflowFailed table, clearing autoflow fields, and exp./rawData-----------------
 -- ------------------------------------------------------------------------------------------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_failed_record$$
