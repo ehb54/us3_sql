@@ -83,9 +83,9 @@ CREATE  TABLE IF NOT EXISTS lab (
 ENGINE = InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflow--
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflow;
 
 CREATE  TABLE IF NOT EXISTS autoflow (
@@ -125,9 +125,9 @@ CREATE  TABLE IF NOT EXISTS autoflow (
   ENGINE = InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowHistory --
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowHistory;
 
@@ -225,9 +225,9 @@ PRIMARY KEY (ID) )
 ENGINE = InnoDB; 
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowFailed --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowFailed;
 
 CREATE TABLE autoflowFailed (
@@ -241,9 +241,9 @@ CREATE TABLE autoflowFailed (
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowStatus --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowStatus;
 
 CREATE TABLE autoflowStatus (
@@ -274,9 +274,9 @@ CREATE TABLE autoflowStatus (
   ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysis -- 
------------------------------------------------------          
+-- ---------------------------------------------------          
 DROP TABLE IF EXISTS autoflowAnalysis;
 
 CREATE TABLE autoflowAnalysis (
@@ -303,9 +303,9 @@ CREATE TABLE autoflowAnalysis (
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
                                           
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisHistory -- 
------------------------------------------------------            
+-- ---------------------------------------------------            
 DROP TABLE IF EXISTS autoflowAnalysisHistory;
                                           
 CREATE TABLE autoflowAnalysisHistory (
@@ -332,9 +332,9 @@ CREATE TABLE autoflowAnalysisHistory (
   PRIMARY KEY (RequestID)
   ) ENGINE=InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowModelsLink --
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowModelsLink;
 
@@ -347,9 +347,9 @@ CREATE  TABLE IF NOT EXISTS autoflowModelsLink (
   ENGINE = InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowStages --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowStages;
 
 CREATE TABLE autoflowStages (
@@ -364,9 +364,9 @@ CREATE TABLE autoflowStages (
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisStages -- 
------------------------------------------------------            
+-- ---------------------------------------------------            
 DROP TABLE IF EXISTS autoflowAnalysisStages;
                                           
 CREATE TABLE autoflowAnalysisStages (
@@ -376,9 +376,9 @@ CREATE TABLE autoflowAnalysisStages (
   PRIMARY KEY (requestID)
   ) ENGINE=InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowIntensity --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowIntensity;
 
 CREATE TABLE autoflowIntensity (
@@ -392,9 +392,9 @@ CREATE TABLE autoflowIntensity (
 
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowReport
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowReport;
 
@@ -414,9 +414,9 @@ CREATE  TABLE IF NOT EXISTS autoflowReport (
   PRIMARY KEY (reportID) )
 ENGINE = InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowReportItem
------------------------------------------------------
+-- ---------------------------------------------------
 
 DROP TABLE IF EXISTS autoflowReportItem;
 
@@ -436,9 +436,9 @@ CREATE  TABLE IF NOT EXISTS autoflowReportItem (
   PRIMARY KEY (reportItemID) )
 ENGINE = InnoDB;
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisABDE --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowAnalysisABDE;
 
 CREATE TABLE autoflowAnalysisABDE (
@@ -452,9 +452,9 @@ CREATE TABLE autoflowAnalysisABDE (
   ) ENGINE=InnoDB;
 
 
------------------------------------------------------
+-- ---------------------------------------------------
 -- Table autoflowAnalysisABDEStages --
------------------------------------------------------
+-- ---------------------------------------------------
 DROP TABLE IF EXISTS autoflowAnalysisABDEStages;
 
 CREATE TABLE autoflowAnalysisABDEStages (

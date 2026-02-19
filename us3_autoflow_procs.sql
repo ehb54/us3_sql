@@ -1279,7 +1279,7 @@ BEGIN
 END$$
 
 
---- Create reacord in the autoflowAnalysis table ------------------------
+-- - Create record in the autoflowAnalysis table -------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_analysis_record$$
 CREATE FUNCTION new_autoflow_analysis_record ( p_personGUID CHAR(36),
@@ -1320,7 +1320,7 @@ BEGIN
 
 END$$
 
----- read AutoflowAnalysis record -------------------------------------------
+-- -- read AutoflowAnalysis record -------------------------------------------
 DROP PROCEDURE IF EXISTS read_autoflowAnalysis_record$$
 CREATE PROCEDURE read_autoflowAnalysis_record ( p_personGUID    CHAR(36),
                                       	       	p_password      VARCHAR(80),
@@ -1365,7 +1365,7 @@ BEGIN
 END$$
 
 
----- read AutoflowAnalysis record -------------------------------------------
+-- -- read AutoflowAnalysis record -------------------------------------------
 DROP PROCEDURE IF EXISTS read_autoflowAnalysisHistory_record$$
 CREATE PROCEDURE read_autoflowAnalysisHistory_record ( p_personGUID    CHAR(36),
                                       	       	     p_password      VARCHAR(80),
@@ -2148,7 +2148,7 @@ END$$
 
 
 
-----  get initial elapsed time upon reattachment ----------------------------- 
+-- --  get initial elapsed time upon reattachment ----------------------------- 
 DROP FUNCTION IF EXISTS read_autoflow_times$$
 CREATE FUNCTION read_autoflow_times ( p_personGUID CHAR(36),
                                        p_password   VARCHAR(80), 
@@ -2183,7 +2183,7 @@ END$$
 
 
 
-----  get initial elapsed time upon reattachment ----------------------------- 
+-- --  get initial elapsed time upon reattachment ----------------------------- 
 DROP FUNCTION IF EXISTS read_autoflow_times_mod$$
 CREATE FUNCTION read_autoflow_times_mod ( p_personGUID CHAR(36),
                                        	p_password   VARCHAR(80), 
@@ -2229,7 +2229,7 @@ BEGIN
 
 END$$
 
-----  TEST: TO BE DELETED: get initial elapsed time upon reattachment ----------------------------- 
+-- --  TEST: TO BE DELETED: get initial elapsed time upon reattachment ----------------------------- 
 DROP FUNCTION IF EXISTS read_autoflow_times_mod_test$$
 CREATE FUNCTION read_autoflow_times_mod_test ( p_personGUID CHAR(36),
                                        	     p_password   VARCHAR(80) ) 
@@ -2273,11 +2273,11 @@ BEGIN
 END$$
 
 
--------------------------------------------------------------------------
---- PROCS and FUNCTIONS related to report and reportItem tables
--------------------------------------------------------------------------
+-- -----------------------------------------------------------------------
+-- - PROCS and FUNCTIONS related to report and reportItem tables
+-- -----------------------------------------------------------------------
 
---- Create record in the report table ------------------------
+-- - Create record in the report table ------------------------
 
 DROP FUNCTION IF EXISTS new_report$$
 CREATE FUNCTION new_report ( p_personGUID CHAR(36),
@@ -2369,7 +2369,7 @@ END$$
 
 
 
---- Create record in the reportItem table ------------------------
+-- - Create record in the reportItem table ------------------------
 
 DROP FUNCTION IF EXISTS new_report_item$$
 CREATE FUNCTION new_report_item ( p_personGUID CHAR(36),
@@ -2422,7 +2422,7 @@ END$$
 
 
 
------ Returns complete information about autoflowReport record by ID
+-- --- Returns complete information about autoflowReport record by ID
 DROP PROCEDURE IF EXISTS get_report_info_by_id$$
 CREATE PROCEDURE get_report_info_by_id( p_personGUID    CHAR(36),
                                        	p_password      VARCHAR(80),
@@ -2467,7 +2467,7 @@ END$$
 
 
 
------ Returns list of autoflowReportItem IDs by parent report's ID
+-- --- Returns list of autoflowReportItem IDs by parent report's ID
 DROP PROCEDURE IF EXISTS get_report_items_ids_by_report_id$$
 CREATE PROCEDURE get_report_items_ids_by_report_id( p_personGUID    CHAR(36),
                                        	            p_password      VARCHAR(80),
@@ -2525,7 +2525,7 @@ BEGIN
 END$$
 
 
------ Returns complete information about autoflowReportItem record by ID
+-- --- Returns complete information about autoflowReportItem record by ID
 DROP PROCEDURE IF EXISTS get_report_item_info_by_id$$
 CREATE PROCEDURE get_report_item_info_by_id( p_personGUID    CHAR(36),
                                        	     p_password      VARCHAR(80),
@@ -2568,7 +2568,7 @@ BEGIN
 
 END$$
 
---- Create reacord in the autoflowIntensity table ------------------------
+-- - Create record in the autoflowIntensity table ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_intensity_record$$
 CREATE FUNCTION new_autoflow_intensity_record ( p_personGUID CHAR(36),
@@ -2719,7 +2719,7 @@ BEGIN
 END$$
 
 
---- Get ID of the autoflowStatus record by autoflowID -----------------------------
+-- - Get ID of the autoflowStatus record by autoflowID -----------------------------
 
 DROP FUNCTION IF EXISTS get_autoflowStatus_id$$
 CREATE FUNCTION get_autoflowStatus_id ( p_personGUID CHAR(36),
@@ -2762,7 +2762,7 @@ END$$
 
 
 
---- Create record in the autoflowStatus table via importRI && importIP for ProtDEv module ------------------------
+-- - Create record in the autoflowStatus table via importRI && importIP for ProtDEv module ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_IP_dev_record$$
 CREATE FUNCTION new_autoflowStatusRI_IP_dev_record ( p_personGUID CHAR(36),
@@ -2801,7 +2801,7 @@ BEGIN
 
 END$$
 
---- Create record in the autoflowStatus table via importRI for ProtDEv module ------------------------
+-- - Create record in the autoflowStatus table via importRI for ProtDEv module ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_dev_record$$
 CREATE FUNCTION new_autoflowStatusRI_dev_record ( p_personGUID CHAR(36),
@@ -2836,7 +2836,7 @@ BEGIN
 
 END$$
 
---- Create record in the autoflowStatus table via importIP for ProtDEv module ------------------------
+-- - Create record in the autoflowStatus table via importIP for ProtDEv module ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusIP_dev_record$$
 CREATE FUNCTION new_autoflowStatusIP_dev_record ( p_personGUID CHAR(36),
@@ -2872,7 +2872,7 @@ BEGIN
 END$$
 
 
---- Create record in the autoflowStatus table via EXPERIMENT's creation GMP run --------------
+-- - Create record in the autoflowStatus table via EXPERIMENT's creation GMP run --------------
 DROP FUNCTION IF EXISTS new_autoflowStatusGMPCreate_record$$
 CREATE FUNCTION new_autoflowStatusGMPCreate_record( p_personGUID CHAR(36),
                                       	      	    p_password   VARCHAR(80),
@@ -2906,7 +2906,7 @@ BEGIN
 END$$
 
 
---- Create record in the autoflowAnalysisABDE table via EXPERIMENT's creation GMP run --------------
+-- - Create record in the autoflowAnalysisABDE table via EXPERIMENT's creation GMP run --------------
 DROP FUNCTION IF EXISTS new_autoflowAnalysisABDE_record$$
 CREATE FUNCTION new_autoflowAnalysisABDE_record( p_personGUID   CHAR(36),
                                                  p_password     VARCHAR(80),
@@ -2939,7 +2939,7 @@ BEGIN
 END$$
 
 
--- read autoflowAnalysisABDE  reacord
+-- read autoflowAnalysisABDE record
 DROP PROCEDURE IF EXISTS read_autoflowAnalysisABDE_record$$
 CREATE PROCEDURE read_autoflowAnalysisABDE_record ( p_personGUID    CHAR(36),
                                        		  p_password     VARCHAR(80),
@@ -3051,7 +3051,7 @@ END$$
 
 
 
---- Create record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event--------------
+-- - Create record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event--------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusStopOptima_record$$
 CREATE FUNCTION new_autoflowStatusStopOptima_record ( p_personGUID CHAR(36),
@@ -3086,7 +3086,7 @@ BEGIN
 END$$
 
 
---- Create record in the autoflowStatus table via LIVE_UPDATE's SKIP Optima event--------------
+-- - Create record in the autoflowStatus table via LIVE_UPDATE's SKIP Optima event--------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusSkipOptima_record$$
 CREATE FUNCTION new_autoflowStatusSkipOptima_record ( p_personGUID CHAR(36),
@@ -3207,7 +3207,7 @@ END$$
 
 
 
---- Create record in the autoflowStatus table via importRI ------------------------
+-- - Create record in the autoflowStatus table via importRI ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusRI_record$$
 CREATE FUNCTION new_autoflowStatusRI_record ( p_personGUID CHAR(36),
@@ -3242,7 +3242,7 @@ BEGIN
 END$$
 
 
---- Create record in the autoflowStatus table via importIP ------------------------
+-- - Create record in the autoflowStatus table via importIP ------------------------
 
 DROP FUNCTION IF EXISTS new_autoflowStatusIP_record$$
 CREATE FUNCTION new_autoflowStatusIP_record ( p_personGUID CHAR(36),
@@ -3750,7 +3750,7 @@ BEGIN
 END$$
 
 
--- Set AUTO_INCREMENT in autolfow to greater of:
+-- Set AUTO_INCREMENT in autoflow to greater of:
 -- current autoflow AUTO_INCREMENT
 -- max( ID ) of autoflowHistory
 DROP PROCEDURE IF EXISTS set_autoflow_auto_increment$$
@@ -3796,7 +3796,7 @@ BEGIN
 END$$
 
 
--- Set AUTO_INCREMENT in autolfowAnalysis to greater of:
+-- Set AUTO_INCREMENT in autoflowAnalysis to greater of:
 -- current autoflowAnalysis AUTO_INCREMENT
 -- max( requestID ) of autoflowAnalysisHistory
 DROP PROCEDURE IF EXISTS set_autoflowAnalysis_auto_increment$$
@@ -3842,9 +3842,9 @@ BEGIN
 END$$
 
 
---------------------------------------------------------------------------------------------------------------
----- stored procs related to autoflowFailed table, clearing autolfow fields, and exp./rawData-----------------
---------------------------------------------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------------------
+-- -- stored procs related to autoflowFailed table, clearing autoflow fields, and exp./rawData-----------------
+-- ------------------------------------------------------------------------------------------------------------
 
 DROP FUNCTION IF EXISTS new_autoflow_failed_record$$
 CREATE FUNCTION new_autoflow_failed_record  ( p_personGUID CHAR(36),
@@ -4295,8 +4295,8 @@ BEGIN
 END$$
 
 
-------------------------------------------------------------------------------
----- GMP Report --------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- -- GMP Report --------------------------------------------------------------
 
 -- add new autoflowGMPreport record
 DROP PROCEDURE IF EXISTS new_autoflow_gmp_report_record$$
@@ -4623,11 +4623,11 @@ BEGIN
 END$$
 
 
----------------------------------------------------------------------------------------------
---- e-Signatures related --------------------------------------------------------------------
----------------------------------------------------------------------------------------------
+-- -------------------------------------------------------------------------------------------
+-- - e-Signatures related --------------------------------------------------------------------
+-- -------------------------------------------------------------------------------------------
 
------ Returns complete information about autoflowGMPReportEsign record by autoflowID
+-- --- Returns complete information about autoflowGMPReportEsign record by autoflowID
 DROP PROCEDURE IF EXISTS get_gmp_review_info_by_autoflowID$$
 CREATE PROCEDURE get_gmp_review_info_by_autoflowID( p_personGUID    CHAR(36),
                                        		    p_password      VARCHAR(80),
@@ -4671,7 +4671,7 @@ BEGIN
 
 END$$
 
------ Returns complete information about autoflowGMPReportEsignHistory record by autoflowID
+-- --- Returns complete information about autoflowGMPReportEsignHistory record by autoflowID
 DROP PROCEDURE IF EXISTS get_gmp_review_info_by_autoflowID_history$$
 CREATE PROCEDURE get_gmp_review_info_by_autoflowID_history( p_personGUID    CHAR(36),
                                        		    	    p_password      VARCHAR(80),
@@ -4716,7 +4716,7 @@ BEGIN
 END$$
 
 
------ new autoflowGMPReportEsign record ---------------------------------
+-- --- new autoflowGMPReportEsign record ---------------------------------
 DROP PROCEDURE IF EXISTS new_gmp_review_record$$
 CREATE PROCEDURE  new_gmp_review_record ( p_personGUID   CHAR(36),
                                       	 p_password     VARCHAR(80),
@@ -4756,7 +4756,7 @@ BEGIN
 END$$
 
 
---- new autoflowGMPReportEsignHistory record
+-- - new autoflowGMPReportEsignHistory record
 DROP PROCEDURE IF EXISTS new_gmp_review_history_record$$
 CREATE PROCEDURE new_gmp_review_history_record ( p_personGUID  CHAR(36),
                                        	       p_password      VARCHAR(80),
