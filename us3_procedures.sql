@@ -127,33 +127,40 @@ BEGIN
 
 END$$
 
-DROP FUNCTION IF EXISTS timestamp2UTC$$
-CREATE FUNCTION timestamp2UTC( p_ts TIMESTAMP )
-  RETURNS TIMESTAMP
-  NO SQL
 
+-- New timestamp2UCT, ensure time gaps are treated 
+DROP FUNCTION IF EXISTS timestamp2UTC$$
+CREATE FUNCTION timestamp2UTC( p_ts DATETIME ) 
+  RETURNS DATETIME
+  NO SQL
 BEGIN
   DECLARE count_gmt INT;
-  DECLARE utcTime   TIMESTAMP;
+  DECLARE utcTime   DATETIME;
 
-  -- Let's see if timezone support is there
+  -- 1. Check for timezone table support
   SELECT COUNT(*) INTO count_gmt
   FROM mysql.time_zone_name
-  WHERE name LIKE '%GMT%';
+  WHERE name = 'UTC' OR name = 'GMT';
 
   IF ( count_gmt > 0 ) THEN
-    -- yes, it looks like timezone support is there
-    SELECT CONVERT_TZ( p_ts, @@global.time_zone, 'GMT') INTO utcTime;
+    -- Try the conversion
+    SET utcTime = CONVERT_TZ( p_ts, @@global.time_zone, 'UTC');
+
+    -- 2. GAP CHECK: If input was valid but result is NULL, it's a DST gap
+    IF (utcTime IS NULL AND p_ts IS NOT NULL) THEN
+      -- Shift forward by 1 hour to get past the gap, then convert
+      SET utcTime = CONVERT_TZ( DATE_ADD(p_ts, INTERVAL 1 HOUR), @@global.time_zone, 'UTC');
+    END IF;
 
   ELSE
-    -- no, not there
-    SELECT ADDTIME( p_ts, @UTC_DIFF ) INTO utcTime;
-
+    -- 3. Fallback to manual offset if tables are missing
+    SET utcTime = ADDTIME( p_ts, @UTC_DIFF );
   END IF;
 
   RETURN( utcTime );
-
 END$$
+
+
 
 -- Checks the user with the passed GUID and password
 DROP FUNCTION IF EXISTS check_user$$
