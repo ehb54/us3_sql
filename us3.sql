@@ -2333,6 +2333,37 @@ CREATE TABLE IF NOT EXISTS referenceScan (
 ENGINE = InnoDB;
 
 
+-- -----------------------------------------------------
+-- Table personal_access_tokens
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS personal_access_tokens;
+CREATE TABLE IF NOT EXISTS personal_access_tokens
+(
+    id             bigint unsigned auto_increment
+        primary key,
+    tokenable_type varchar(255)    not null,
+    tokenable_id   bigint unsigned not null,
+    name           text            not null,
+    token          varchar(64)     not null,
+    abilities      text            null,
+    last_used_at   timestamp       null,
+    expires_at     timestamp       null,
+    created_at     timestamp       null,
+    updated_at     timestamp       null,
+    constraint personal_access_tokens_token_unique
+        unique (token)
+)
+  ENGINE = InnoDB;
+DROP INDEX IF EXISTS personal_access_tokens_expires_at_index ON personal_access_tokens;
+CREATE INDEX IF NOT EXISTS personal_access_tokens_expires_at_index
+    on personal_access_tokens (expires_at);
+DROP INDEX IF EXISTS personal_access_tokens_tokenable_type_tokenable_id_index ON personal_access_tokens;
+CREATE INDEX IF NOT EXISTS personal_access_tokens_tokenable_type_tokenable_id_index
+    on personal_access_tokens (tokenable_type, tokenable_id);
+
+
+
+
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
