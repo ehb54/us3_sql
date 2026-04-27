@@ -2337,7 +2337,7 @@ ENGINE = InnoDB;
 -- Table personal_access_tokens
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS personal_access_tokens;
-create table personal_access_tokens
+CREATE TABLE IF NOT EXISTS personal_access_tokens
 (
     id             bigint unsigned auto_increment
         primary key,
@@ -2354,11 +2354,11 @@ create table personal_access_tokens
         unique (token)
 )
   ENGINE = InnoDB;
-DROP INDEX personal_access_tokens_expires_at_index ON personal_access_tokens;
-create index personal_access_tokens_expires_at_index
+DROP INDEX IF EXISTS personal_access_tokens_expires_at_index ON personal_access_tokens;
+CREATE INDEX IF NOT EXISTS personal_access_tokens_expires_at_index
     on personal_access_tokens (expires_at);
-DROP INDEX personal_access_tokens_tokenable_type_tokenable_id_index ON personal_access_tokens;
-create index personal_access_tokens_tokenable_type_tokenable_id_index
+DROP INDEX IF EXISTS personal_access_tokens_tokenable_type_tokenable_id_index ON personal_access_tokens;
+CREATE INDEX IF NOT EXISTS personal_access_tokens_tokenable_type_tokenable_id_index
     on personal_access_tokens (tokenable_type, tokenable_id);
 
 
