@@ -31,6 +31,7 @@ CREATE  TABLE IF NOT EXISTS people (
   username VARCHAR(80) NULL,
   password VARCHAR(80) NOT NULL ,
   activated TINYINT(1) NOT NULL DEFAULT false ,
+  account_enabled TINYINT(1) UNSIGNED NOT NULL DEFAULT 1 ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
   clusterAuthorizations VARCHAR(255) NOT NULL default 'lonestar5:stampede2:comet:jetstream',
@@ -41,6 +42,40 @@ CREATE  TABLE IF NOT EXISTS people (
   userNamePAM VARCHAR(63) UNIQUE NOT NULL,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table people_audit
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS people_audit ;
+
+CREATE TABLE IF NOT EXISTS people_audit (
+  auditID            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  personID           INT NOT NULL,
+  user_email         VARCHAR(128) NULL,
+  user_name          VARCHAR(255) NULL,
+  changed_by_personID INT NULL,
+  changed_by_email   VARCHAR(128) NULL,
+  changed_by_name    VARCHAR(255) NULL,
+  action             ENUM(
+                         'CREATE',
+                         'UPDATE',
+                         'DELETE',
+                         'ACCOUNT_ENABLE',
+                         'ACCOUNT_DISABLE',
+                         'USERLEVEL_CHANGE',
+                         'ESCALATION_REJECTED'
+                     ) NOT NULL,
+  old_values         LONGTEXT NULL,
+  new_values         LONGTEXT NULL,
+  created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  notes              VARCHAR(255) NULL,
+  PRIMARY KEY (auditID),
+  INDEX idx_people_audit_person_time    (personID, created_at),
+  INDEX idx_people_audit_changedby_time (changed_by_personID, created_at),
+  INDEX idx_people_audit_action_time    (action, created_at),
+  INDEX idx_people_audit_created_at     (created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 
 -- -----------------------------------------------------
