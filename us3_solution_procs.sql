@@ -361,22 +361,6 @@ BEGIN
         solutionID   = @LAST_INSERT_ID,
         personID     = p_ownerID;
 
-      -- Now associate solution with experiment, if we can
-      IF ( verify_experiment_permission( p_personGUID, p_password, p_experimentID ) = @OK ) THEN
-        INSERT INTO experimentSolutionChannel SET
-          experimentID = p_experimentID,
-          solutionID   = @LAST_INSERT_ID,
-          channelID    = p_channelID;
-
-      ELSE
-        -- just use the default experimentID
-        INSERT INTO experimentSolutionChannel SET
-          experimentID = 1,
-          solutionID   = @LAST_INSERT_ID,
-          channelID    = p_channelID;
-
-      END IF;
-
       -- Don't update @LAST_INSERT_ID, because the user is not interested in this one
 
     END IF;
