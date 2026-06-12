@@ -161,6 +161,7 @@ BEGIN
       FROM     people
       WHERE    gmpReviewerRole = 'REVIEWER'
       AND      activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -175,6 +176,7 @@ BEGIN
       FROM     people
       WHERE    (gmpReviewerRole = 'REVIEWER')
       AND      activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -220,6 +222,7 @@ BEGIN
       FROM     people
       WHERE    gmpReviewerRole = 'APPROVER'
       AND      activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -234,6 +237,7 @@ BEGIN
       FROM     people
       WHERE    (gmpReviewerRole = 'APPROVER')
       AND      activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -279,6 +283,7 @@ BEGIN
                organization
       FROM     people
       WHERE    activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -292,6 +297,7 @@ BEGIN
                organization
       FROM     people
       WHERE    activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
