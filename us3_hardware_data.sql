@@ -142,7 +142,7 @@ INSERT INTO abstractCenterpiece SET
   name              = 'Titanium 2-channel standard',
   materialName      = 'Titanium',
   channels          = 1,          -- x2 for actual number
-  bottom            = '7.15',
+  bottom            = '7.11',
   shape             = 'standard',
   maxRPM            = 60000,
   pathLength        = 1.2,
@@ -255,7 +255,7 @@ INSERT INTO abstractCenterpiece SET
   name              = 'Titanium 2-channel 6 mm',
   materialName      = 'Titanium',
   channels          = 1,          -- x2 for actual number
-  bottom            = '7.10',
+  bottom            = '7.11',
   shape             = 'sector',
   maxRPM            = 60000,
   pathLength        = 0.6,
@@ -273,7 +273,7 @@ INSERT INTO abstractCenterpiece SET
   name              = 'Titanium 2-channel 3 mm',
   materialName      = 'Titanium',
   channels          = 1,          -- x2 for actual number
-  bottom            = '7.10',
+  bottom            = '7.11',
   shape             = 'sector',
   maxRPM            = 60000,
   pathLength        = 0.3,
