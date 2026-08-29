@@ -160,6 +160,8 @@ BEGIN
                organization
       FROM     people
       WHERE    gmpReviewerRole = 'REVIEWER'
+      AND      activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -173,6 +175,8 @@ BEGIN
                organization
       FROM     people
       WHERE    (gmpReviewerRole = 'REVIEWER')
+      AND      activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -217,6 +221,8 @@ BEGIN
                organization
       FROM     people
       WHERE    gmpReviewerRole = 'APPROVER'
+      AND      activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -230,6 +236,8 @@ BEGIN
                organization
       FROM     people
       WHERE    (gmpReviewerRole = 'APPROVER')
+      AND      activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
@@ -241,6 +249,69 @@ BEGIN
   END IF;
 
 END$$
+
+
+-- Lists all ID's and names in the database [all qualifying for SME] optionally matching
+--   some text in the last name field
+DROP PROCEDURE IF EXISTS get_people_gsme$$
+CREATE PROCEDURE get_people_gsme( p_personGUID CHAR(36),
+                             	  p_password   VARCHAR(80),
+                             	  p_template   VARCHAR(30) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE template VARCHAR(40);
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET p_template      = TRIM( p_template );
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_people( p_personGUID, p_password, p_template )  < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSEIF ( LENGTH(p_template) = 0 ) THEN
+      SELECT @OK AS status;
+
+      SELECT   personID,
+               lname AS lastName,
+               fname AS firstName,
+               organization
+      FROM     people
+      WHERE    activated = 1
+      AND      account_enabled = 1
+      ORDER BY lname;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SET template = CONCAT('%', p_template, '%');
+
+      SELECT   personID,
+               lname AS lastName,
+               fname AS firstName,
+               organization
+      FROM     people
+      WHERE    activated = 1
+      AND      account_enabled = 1
+      AND      (lname LIKE template OR fname LIKE template) 
+      ORDER BY lname, fname;
+    
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+
 
 
 -- Lists all ID's and names in the database [ ![NOT] global reviewers] optionally matching
