@@ -824,7 +824,7 @@ BEGIN
 
       SELECT   modelGUID, description, xml, variance, meniscus, personID,
                timestamp2UTC( lastUpdated ) AS UTC_lastUpdated,
-               MD5( xml ) AS checksum, LENGTH( xml ) AS size
+               MD5( xml ) AS checksum, LENGTH( xml ) AS size, stats
       FROM     model m, modelPerson mp
       WHERE    m.modelID = mp.modelID
       AND      m.modelID = p_modelID;
