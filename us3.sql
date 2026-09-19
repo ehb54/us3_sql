@@ -500,6 +500,71 @@ CREATE TABLE autoflowAnalysisABDEStages (
   ) ENGINE=InnoDB;
 
 
+-- ---------------------------------------------------
+-- Table autoflowAnalysisVelMwl --
+--   One row PER GMP VEL-MWL RUN (autoflowID UNIQUE), mirroring
+--   autoflowAnalysisABDE. Rather than a single scalar per run, though,
+--   VEL-MWL channels are decided one at a time as the pipeline works
+--   through them (US_MwlSpeciesFit's Accept/Reject), so channelDecisions
+--   holds a JSON object keyed by channel, e.g.:
+--     { "2 / A": { "decision":"Accepted", "decisionByID":12,
+--                  "decisionByName":"Smith, John",
+--                  "decisionTs":"2026-09-18 12:34:56" },
+--       "3 / B": { "decision":"Rejected", ... } }
+--   Each channel's key is added/updated in place as its decision is
+--   made, so a run re-attached mid-way can look up just its own
+--   channel's key rather than needing every channel decided at once.
+--   Also leaves room to add other per-channel or per-run flags into
+--   the same JSON object later without a schema change.
+-- ---------------------------------------------------
+DROP TABLE IF EXISTS autoflowAnalysisVelMwl;
+
+CREATE TABLE autoflowAnalysisVelMwl (
+  ID                  int(11)      NOT NULL AUTO_INCREMENT,
+  autoflowID          int(11)      NOT NULL UNIQUE,
+  channelDecisions    json,
+  channelDecisionsTs  timestamp    NULL,
+
+  PRIMARY KEY (ID)
+  ) ENGINE=InnoDB;
+
+-- NOTE: the per-channel concurrency guard (claiming a channel before
+-- starting its deconvolution) lives inside autoflowAnalysisVelMwl's own
+-- channelDecisions JSON (see autoflow_velmwl_channel_claim() below) --
+-- it doesn't need a second table. autoflowAnalysisVelMwlStages, below,
+-- is a different thing: a run-wide completion gate, not a per-channel
+-- guard, exactly mirroring autoflowAnalysisABDEStages's shape (one row
+-- per autoflowID). Recording every channel's decision does NOT by
+-- itself mean the run's VEL-MWL analysis is finished -- that's a
+-- separate, run-level fact, needed to gate the one-time switch to the
+-- Report stage once every channel has actually been decided.
+
+
+-- ---------------------------------------------------
+-- Table autoflowAnalysisVelMwlStages --
+--   One row per run (autoflowID UNIQUE), exactly mirroring
+--   autoflowAnalysisABDEStages. Where autoflowAnalysisABDEStages guards
+--   ABDE's one-time whole-run Save-Profiles step, this guards VEL-MWL's
+--   one-time switch to the Report stage: once the last channel's
+--   Accept/Reject decision comes in (see
+--   US_Analysis_auto::velmwl_deconv_rejected()/accepted() in
+--   us_autoflow_analysis.cpp), that code claims this row
+--   (unknown -> STARTED) before calling update_autoflow_record_atAnalysis()
+--   and emitting analysis_complete_auto() -- so a run re-attached after
+--   already switching to Report doesn't try to switch again, and two
+--   overlapping "last channel decided" events can't both fire the
+--   switch.
+-- ---------------------------------------------------
+DROP TABLE IF EXISTS autoflowAnalysisVelMwlStages;
+
+CREATE TABLE autoflowAnalysisVelMwlStages (
+  autoflowID        int(11)      NOT NULL UNIQUE,
+  analysisVelMwl    text         DEFAULT "unknown",
+
+  PRIMARY KEY (autoflowID)
+  ) ENGINE=InnoDB;
+
+
 -- -----------------------------------------------------
 -- Table instrument
 -- -----------------------------------------------------
