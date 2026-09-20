@@ -3093,19 +3093,35 @@ BEGIN
 END$$
 
 
--- Save (or update) one channel's Accept/Reject decision within the
--- run's single autoflowAnalysisVelMwl row -- called from
--- US_MwlSpeciesFit::record_velmwl_channel_decision() as soon as the
--- user clicks Accept/Reject. Locks the row (FOR UPDATE) for the
--- duration of the read-modify-write so two channels' decisions (or,
--- in the unlikely case, the same channel decided twice concurrently)
--- can't race each other. If no row exists yet for this autoflowID --
--- e.g. an older run predating this feature -- one is created inline
--- rather than failing. Client side maps the QStringList
--- {"update_autoflowAnalysisVelMwl_channel_decision", autoflowID,
--- channel, decision, userID, userName} onto this procedure's params
--- (after personGUID/password, which US_DB2 prepends automatically),
--- and reads the returned status via US_DB2::statusQuery().
+-- Save one channel's Accept/Reject decision within the run's single
+-- autoflowAnalysisVelMwl row -- called from US_MwlSpeciesFit::
+-- record_velmwl_channel_decision() as soon as the user clicks
+-- Accept/Reject. Locks the row (FOR UPDATE) for the duration of the
+-- read-modify-write so two sessions deciding the same channel at
+-- nearly the same moment can't race each other.
+--
+-- ALEXEY: FIRST DECISION WINS. If this channel already has a decision
+-- recorded -- by this session or, more to the point, a different one
+-- that got there first -- this call does NOT overwrite it; the
+-- existing decision stands. Either way (newly recorded here, or
+-- already decided by someone else) the second result set below
+-- reports what actually ended up recorded for the channel, so the
+-- caller can tell which case happened and, when it lost the race,
+-- show the user who/what/when won instead of silently clobbering it
+-- or silently doing nothing.
+--
+-- If no row exists yet for this autoflowID -- e.g. an older run
+-- predating this feature -- one is created inline rather than
+-- failing. Client side maps the QStringList {"update_
+-- autoflowAnalysisVelMwl_channel_decision", autoflowID, channel,
+-- decision, userID, userName} onto this procedure's params (after
+-- personGUID/password, which US_DB2 prepends automatically), reads
+-- the status via US_DB2::statusQuery() (always @OK barring a real DB
+-- error -- losing the race is not itself an error), then reads the
+-- second result set via US_DB2::next()/value(): newly_recorded (0/1),
+-- recorded_decision, recorded_decisionByID, recorded_decisionByName,
+-- recorded_decisionTs -- the decision now on record for this channel,
+-- whoever's it turned out to be.
 DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_channel_decision$$
 CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_decision (
                                                   p_personGUID     CHAR(36),
@@ -3118,8 +3134,10 @@ CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_decision (
   MODIFIES SQL DATA
 
 BEGIN
-  DECLARE count_records INT;
-  DECLARE json_path     VARCHAR(64);
+  DECLARE count_records      INT;
+  DECLARE json_path          VARCHAR(64);
+  DECLARE decision_json_path VARCHAR(80);
+  DECLARE existing_decision  VARCHAR(20) DEFAULT NULL;
 
   DECLARE exit handler for sqlexception
    BEGIN
@@ -3130,7 +3148,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  SET json_path = CONCAT( '$."', p_channel, '"' );
+  SET json_path          = CONCAT( '$."', p_channel, '"' );
+  SET decision_json_path = CONCAT( json_path, '."decision"' );
 
   START TRANSACTION;
 
@@ -3143,29 +3162,49 @@ BEGIN
     IF ( count_records = 0 ) THEN
       -- No run-level record yet (older run, or created outside the
       -- normal add_autoflow_record*() path) -- create it now rather
-      -- than losing this decision.
+      -- than losing this decision. Trivially not yet decided.
       INSERT INTO autoflowAnalysisVelMwl SET
         autoflowID         = p_autoflowID,
         channelDecisions   = JSON_OBJECT(),
         channelDecisionsTs = NOW();
 
+    ELSE
+      SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, decision_json_path ) )
+      INTO       existing_decision
+      FROM       autoflowAnalysisVelMwl
+      WHERE      autoflowID = p_autoflowID;
+
     END IF;
 
-    UPDATE  autoflowAnalysisVelMwl
-    SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
-                                            json_path,
-                                            JSON_OBJECT( 'decision',       p_decision,
-                                                          'decisionByID',   p_decisionByID,
-                                                          'decisionByName', p_decisionByName,
-                                                          'decisionTs',     NOW() ) ),
-            channelDecisionsTs = NOW()
-    WHERE   autoflowID = p_autoflowID;
+    IF ( existing_decision IS NULL ) THEN
+      -- Nobody has decided this channel yet -- this call wins it.
+      UPDATE  autoflowAnalysisVelMwl
+      SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
+                                              json_path,
+                                              JSON_OBJECT( 'decision',       p_decision,
+                                                            'decisionByID',   p_decisionByID,
+                                                            'decisionByName', p_decisionByName,
+                                                            'decisionTs',     NOW() ) ),
+              channelDecisionsTs = NOW()
+      WHERE   autoflowID = p_autoflowID;
+
+    END IF;
+    -- else: already decided (by this or another session) -- leave it
+    -- exactly as recorded; the SELECT below reports that decision back.
 
   END IF;
 
   COMMIT;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+  SELECT   ( existing_decision IS NULL )                                                            AS newly_recorded,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, decision_json_path ) )                      AS recorded_decision,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionByID"' ) ) )  AS recorded_decisionByID,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionByName"' ) ) )AS recorded_decisionByName,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionTs"' ) ) )    AS recorded_decisionTs
+  FROM     autoflowAnalysisVelMwl
+  WHERE    autoflowID = p_autoflowID;
 
 END$$
 
@@ -3225,133 +3264,23 @@ BEGIN
 END$$
 
 
--- Claim a channel for processing -- called (from
--- US_MwlSpeciesFit's constructor) BEFORE the deconvolution/dialog for
--- a channel starts, not after. Analogous in intent to
--- autoflow_abde_analysis_status() above (the unknown->STARTED
--- transition that guards ABDE's whole-run Save-Profiles step against
--- being duplicated by an overlapping session), but scoped to one
--- channel's key within the run's single channelDecisions JSON object
--- instead of a second table -- since here it's channels, not whole
--- runs, that are individually claimed and processed one at a time.
--- Locks the row, and only if the channel's key does not exist at all
--- yet (JSON_CONTAINS_PATH = 0) writes a 'STARTED' placeholder and
--- returns unique_start = 1; if the key already exists -- whether
--- because another session already claimed/started it, or because it
--- was already decided -- returns unique_start = 0 so the caller backs
--- off instead of duplicating the work. (The caller still needs to
--- check get_autoflowAnalysisVelMwl_channel_decision() separately to
--- tell "someone else is mid-processing this channel right now" apart
--- from "this channel is already decided".)
+-- REMOVED: autoflow_velmwl_channel_claim() / autoflow_velmwl_channel_
+-- claim_revert(). These used to write a transient {"status":"STARTED",
+-- "claimedTs":...} placeholder into a channel's key in channelDecisions
+-- before its US_MwlSpeciesFit dialog opened, purely to stop two
+-- overlapping sessions from re-simulating/re-deciding the same channel
+-- at once. In practice this is a single-session interactive workflow,
+-- and the placeholder had no way to get cleared on a hard crash (or,
+-- before revert calls were added on the other exit paths, on a plain
+-- tab-switch or program close either) -- once left behind, it
+-- permanently blocked that channel's reprocessing with no in-app way
+-- to fix it. The client no longer calls either procedure: the only
+-- guard against reprocessing a channel now is whether it has a real
+-- decision recorded, via get_autoflowAnalysisVelMwl_channel_decision()
+-- below. These two DROPs just clean up the procedures on a database
+-- that still has them from before this change.
 DROP PROCEDURE IF EXISTS autoflow_velmwl_channel_claim$$
-CREATE PROCEDURE autoflow_velmwl_channel_claim ( p_personGUID CHAR(36),
-                                              p_password       VARCHAR(80),
-                                              p_autoflowID     INT,
-                                              p_channel        VARCHAR(20) )
-
-  -- RETURNS INT
-  MODIFIES SQL DATA
-
-BEGIN
-  DECLARE count_records  INT;
-  DECLARE already_claimed INT DEFAULT 1;
-  DECLARE unique_start   TINYINT DEFAULT 0;
-  DECLARE json_path      VARCHAR(64);
-
-  DECLARE exit handler for sqlexception
-   BEGIN
-    ROLLBACK;
-   END;
-
-  CALL config();
-  SET @US3_LAST_ERRNO = @OK;
-  SET @US3_LAST_ERROR = '';
-
-  SET json_path = CONCAT( '$."', p_channel, '"' );
-
-  START TRANSACTION;
-
-  SELECT     COUNT(*)
-  INTO       count_records
-  FROM       autoflowAnalysisVelMwl
-  WHERE      autoflowID = p_autoflowID FOR UPDATE;
-
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    IF ( count_records = 0 ) THEN
-      -- No run-level record yet -- create it, then this channel is
-      -- trivially unclaimed.
-      INSERT INTO autoflowAnalysisVelMwl SET
-        autoflowID         = p_autoflowID,
-        channelDecisions   = JSON_OBJECT(),
-        channelDecisionsTs = NOW();
-
-      SET already_claimed = 0;
-
-    ELSE
-      SELECT     JSON_CONTAINS_PATH( COALESCE( channelDecisions, JSON_OBJECT() ), 'one', json_path )
-      INTO       already_claimed
-      FROM       autoflowAnalysisVelMwl
-      WHERE      autoflowID = p_autoflowID;
-
-    END IF;
-
-    IF ( already_claimed = 0 ) THEN
-      UPDATE  autoflowAnalysisVelMwl
-      SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
-                                              json_path,
-                                              JSON_OBJECT( 'status', 'STARTED', 'claimedTs', NOW() ) ),
-              channelDecisionsTs = NOW()
-      WHERE   autoflowID = p_autoflowID;
-
-      SET unique_start = 1;
-
-    END IF;
-
-  END IF;
-
-  SELECT unique_start as status;
-  COMMIT;
-
-END$$
-
-
--- Release a channel's claim without recording a decision -- e.g. the
--- user closed US_MwlSpeciesFit without clicking Accept/Reject, or the
--- session otherwise aborted mid-channel. Removes the channel's 'STARTED'
--- placeholder key entirely (JSON_REMOVE) so a later session's
--- autoflow_velmwl_channel_claim() call for this channel can succeed
--- again, rather than being permanently blocked by an abandoned claim.
--- Analogous to autoflow_abde_analysis_status_revert() above. Must NOT
--- be called once a real decision has been recorded for the channel --
--- callers should check get_autoflowAnalysisVelMwl_channel_decision()
--- first if that distinction matters.
 DROP PROCEDURE IF EXISTS autoflow_velmwl_channel_claim_revert$$
-CREATE PROCEDURE autoflow_velmwl_channel_claim_revert ( p_personGUID CHAR(36),
-                                                      p_password       VARCHAR(80),
-                                                      p_autoflowID     INT,
-                                                      p_channel        VARCHAR(20) )
-
-  MODIFIES SQL DATA
-
-BEGIN
-  DECLARE json_path VARCHAR(64);
-
-  CALL config();
-  SET @US3_LAST_ERRNO = @OK;
-  SET @US3_LAST_ERROR = '';
-
-  SET json_path = CONCAT( '$."', p_channel, '"' );
-
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
-    UPDATE  autoflowAnalysisVelMwl
-    SET     channelDecisions = JSON_REMOVE( channelDecisions, json_path )
-    WHERE   autoflowID = p_autoflowID;
-
-  END IF;
-
-  SELECT @US3_LAST_ERRNO AS status;
-
-END$$
 
 
 -- Read the whole autoflowAnalysisVelMwl record for a run -- one row,
@@ -3409,9 +3338,10 @@ END$$
 -- =====================================================================
 -- autoflowAnalysisVelMwlStages -- run-level "is the whole VEL-MWL
 -- analysis for this run finished" gate (NOT a per-channel guard --
--- that one lives inside autoflowAnalysisVelMwl.channelDecisions via
--- autoflow_velmwl_channel_claim() above). One row per autoflowID,
--- exactly mirroring autoflowAnalysisABDEStages.
+-- that one lives inside autoflowAnalysisVelMwl.channelDecisions'
+-- per-channel decision, via update_/get_autoflowAnalysisVelMwl_
+-- channel_decision() above). One row per autoflowID, exactly
+-- mirroring autoflowAnalysisABDEStages.
 -- =====================================================================
 
 
