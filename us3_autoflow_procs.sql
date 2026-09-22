@@ -3209,6 +3209,87 @@ BEGIN
 END$$
 
 
+-- Persists one channel's deconvolved-edit filename (protocol_details_at_
+-- analysis_velmwl["filename"], as set in US_Analysis_auto::velmwl_deconv_
+-- accepted() just before US_Edit::load_auto_velmwl()) into that channel's
+-- entry in channelDecisions, alongside its decision/decisionByID/
+-- decisionByName/decisionTs. Without this, process_velmwl_after_all_
+-- channels_decided() has no way to know which data to reload for each
+-- Approved channel when it later constructs US_2dsa -- see
+-- start_next_2dsa_channel() in us_autoflow_analysis.cpp.
+--
+-- Unlike update_autoflowAnalysisVelMwl_channel_decision() above, this is
+-- NOT a contested first-decision-wins write: by the time this is called,
+-- the decision for this channel is already settled, and only the session
+-- that actually ran US_Edit::load_auto_velmwl() (and therefore knows
+-- where the resulting edit landed) ever calls this. A plain JSON_SET is
+-- sufficient. read_autoflowAnalysisVelMwl_record() below needs no
+-- changes -- it already returns the whole channelDecisions blob, so
+-- "filename" shows up automatically once this call has run.
+--
+-- Client side maps the QStringList {"update_autoflowAnalysisVelMwl_
+-- channel_filename", autoflowID, channel, filename} onto this
+-- procedure's params (after personGUID/password, prepended by US_DB2),
+-- and reads the status via US_DB2::statusQuery() (same shape as most
+-- other fire-and-forget updates in this file).
+DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_channel_filename$$
+CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_filename (
+                                                  p_personGUID     CHAR(36),
+                                                  p_password       VARCHAR(80),
+                                                  p_autoflowID     INT,
+                                                  p_channel        VARCHAR(20),
+                                                  p_filename       VARCHAR(255) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE json_path     VARCHAR(80);
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET json_path = CONCAT( '$."', p_channel, '"."filename"' );
+
+  START TRANSACTION;
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      -- Should not normally happen -- update_autoflowAnalysisVelMwl_
+      -- channel_decision() always creates the row first, and this call
+      -- only ever follows a successful decision recording. Don't lose
+      -- the filename if it does happen, though.
+      INSERT INTO autoflowAnalysisVelMwl SET
+        autoflowID         = p_autoflowID,
+        channelDecisions   = JSON_OBJECT(),
+        channelDecisionsTs = NOW();
+    END IF;
+
+    UPDATE  autoflowAnalysisVelMwl
+    SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
+                                            json_path, p_filename ),
+            channelDecisionsTs = NOW()
+    WHERE   autoflowID = p_autoflowID;
+
+  END IF;
+
+  COMMIT;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
 -- Look up one channel's already-recorded Accept/Reject decision within
 -- the run's autoflowAnalysisVelMwl row -- e.g. on run re-attachment, so
 -- the channel is not re-processed. Client side maps the QStringList
