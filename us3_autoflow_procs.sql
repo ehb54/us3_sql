@@ -3093,35 +3093,57 @@ BEGIN
 END$$
 
 
--- Save one channel's Accept/Reject decision within the run's single
+-- Save one channel's Accept/Reject decision -- and, for an Accept, its
+-- deconvolved-edit filename -- within the run's single
 -- autoflowAnalysisVelMwl row -- called from US_MwlSpeciesFit::
 -- record_velmwl_channel_decision() as soon as the user clicks
 -- Accept/Reject. Locks the row (FOR UPDATE) for the duration of the
 -- read-modify-write so two sessions deciding the same channel at
 -- nearly the same moment can't race each other.
 --
+-- ALEXEY: p_filename used to be persisted separately and later, by a
+-- second, fire-and-forget call (update_autoflowAnalysisVelMwl_channel_
+-- filename() below, from US_Analysis_auto::velmwl_deconv_accepted())
+-- made only after US_ConvertGui::import_ssf_data_auto()/US_Edit::
+-- load_auto_velmwl() had already run. That left a window where a
+-- channel could be on record as "Accepted" with no filename yet -- or
+-- permanently, if that second write failed, since its failure was only
+-- logged, never surfaced or retried. process_velmwl_after_all_channels_
+-- decided() had to defensively detect and skip such channels. Folding
+-- the filename into this call removes that gap: US_MwlSpeciesFit
+-- already knows protocol_details["ssf_dir_name"] (and therefore the
+-- filename derived from it) at the moment the user clicks Accept, so it
+-- can go out atomically with the decision, in one write, instead of as
+-- a second, independent one. Pass an empty string for p_filename on a
+-- Reject -- there's nothing to store, and Rejected channels are
+-- disregarded by process_velmwl_after_all_channels_decided() regardless
+-- of what's in "filename".
+--
 -- ALEXEY: FIRST DECISION WINS. If this channel already has a decision
 -- recorded -- by this session or, more to the point, a different one
--- that got there first -- this call does NOT overwrite it; the
--- existing decision stands. Either way (newly recorded here, or
--- already decided by someone else) the second result set below
--- reports what actually ended up recorded for the channel, so the
--- caller can tell which case happened and, when it lost the race,
--- show the user who/what/when won instead of silently clobbering it
--- or silently doing nothing.
+-- that got there first -- this call does NOT overwrite it (filename
+-- included); the existing decision/filename pair stands as a unit.
+-- Either way (newly recorded here, or already decided by someone else)
+-- the second result set below reports what actually ended up recorded
+-- for the channel, so the caller can tell which case happened and, when
+-- it lost the race, show the user who/what/when won -- and use the
+-- filename that actually won, not the one it computed locally --
+-- instead of silently clobbering it or silently doing nothing.
 --
 -- If no row exists yet for this autoflowID -- e.g. an older run
 -- predating this feature -- one is created inline rather than
 -- failing. Client side maps the QStringList {"update_
 -- autoflowAnalysisVelMwl_channel_decision", autoflowID, channel,
--- decision, userID, userName} onto this procedure's params (after
--- personGUID/password, which US_DB2 prepends automatically), reads
--- the status via US_DB2::statusQuery() (always @OK barring a real DB
--- error -- losing the race is not itself an error), then reads the
--- second result set via US_DB2::next()/value(): newly_recorded (0/1),
--- recorded_decision, recorded_decisionByID, recorded_decisionByName,
--- recorded_decisionTs -- the decision now on record for this channel,
--- whoever's it turned out to be.
+-- decision, userID, userName, filename} onto this procedure's params
+-- (after personGUID/password, which US_DB2 prepends automatically).
+-- Deliberately read via US_DB2::query() + next(), NOT statusQuery() --
+-- this proc returns a second result set beyond the status one (see the
+-- comment on US_MwlSpeciesFit::record_velmwl_channel_decision() in
+-- us_mwl_species_fit.cpp), and statusQuery() alone would not reach it.
+-- That second result set (US_DB2::next()/value()) carries: newly_recorded
+-- (0/1), recorded_decision, recorded_decisionByID, recorded_decisionByName,
+-- recorded_decisionTs, recorded_filename -- the decision (and filename)
+-- now on record for this channel, whoever's it turned out to be.
 DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_channel_decision$$
 CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_decision (
                                                   p_personGUID     CHAR(36),
@@ -3130,7 +3152,8 @@ CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_decision (
                                                   p_channel        VARCHAR(20),
                                                   p_decision       VARCHAR(20),
                                                   p_decisionByID   INT,
-                                                  p_decisionByName VARCHAR(160) )
+                                                  p_decisionByName VARCHAR(160),
+                                                  p_filename       VARCHAR(255) )
   MODIFIES SQL DATA
 
 BEGIN
@@ -3177,20 +3200,23 @@ BEGIN
     END IF;
 
     IF ( existing_decision IS NULL ) THEN
-      -- Nobody has decided this channel yet -- this call wins it.
+      -- Nobody has decided this channel yet -- this call wins it,
+      -- filename included.
       UPDATE  autoflowAnalysisVelMwl
       SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
                                               json_path,
                                               JSON_OBJECT( 'decision',       p_decision,
                                                             'decisionByID',   p_decisionByID,
                                                             'decisionByName', p_decisionByName,
-                                                            'decisionTs',     NOW() ) ),
+                                                            'decisionTs',     NOW(),
+                                                            'filename',       p_filename ) ),
               channelDecisionsTs = NOW()
       WHERE   autoflowID = p_autoflowID;
 
     END IF;
     -- else: already decided (by this or another session) -- leave it
-    -- exactly as recorded; the SELECT below reports that decision back.
+    -- exactly as recorded, filename included; the SELECT below reports
+    -- that decision (and filename) back.
 
   END IF;
 
@@ -3202,16 +3228,29 @@ BEGIN
            JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, decision_json_path ) )                      AS recorded_decision,
            JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionByID"' ) ) )  AS recorded_decisionByID,
            JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionByName"' ) ) )AS recorded_decisionByName,
-           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionTs"' ) ) )    AS recorded_decisionTs
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."decisionTs"' ) ) )    AS recorded_decisionTs,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( json_path, '."filename"' ) ) )      AS recorded_filename
   FROM     autoflowAnalysisVelMwl
   WHERE    autoflowID = p_autoflowID;
 
 END$$
 
 
--- Persists one channel's deconvolved-edit filename (protocol_details_at_
--- analysis_velmwl["filename"], as set in US_Analysis_auto::velmwl_deconv_
--- accepted() just before US_Edit::load_auto_velmwl()) into that channel's
+-- ALEXEY: NO LONGER CALLED by the client. This used to persist one
+-- channel's deconvolved-edit filename (protocol_details_at_analysis_
+-- velmwl["filename"]) into channelDecisions as a second, separate,
+-- fire-and-forget write, made from US_Analysis_auto::velmwl_deconv_
+-- accepted() sometime after the Accept decision itself was recorded.
+-- That filename is now passed as p_filename directly into
+-- update_autoflowAnalysisVelMwl_channel_decision() above and written
+-- atomically with the decision, from US_MwlSpeciesFit::
+-- record_velmwl_channel_decision() -- see that procedure's header
+-- comment. This procedure is left in place, unused, in case anything
+-- outside this codebase still calls it directly; it's safe to DROP it
+-- for good once that's confirmed not to be the case. Original doc
+-- below, for reference:
+--
+-- Persists one channel's deconvolved-edit filename into that channel's
 -- entry in channelDecisions, alongside its decision/decisionByID/
 -- decisionByName/decisionTs. Without this, process_velmwl_after_all_
 -- channels_decided() has no way to know which data to reload for each
@@ -3286,6 +3325,198 @@ BEGIN
   COMMIT;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- ALEXEY: Records one deconvolved species' (S1, S2, ...) 2DSA-IT model
+-- into the SAME channel entry in channelDecisions as its Accept/Reject
+-- decision/filename above -- called from US_2dsa::
+-- record_2dsa_model_in_velmwl(), right after that species' save()
+-- returns (US_2dsa::analysis_done()'s savedata branch, us_gmp_auto_mode
+-- only). Nested one level deeper than "decision"/"filename":
+--   channelDecisions[ p_channel ].models[ p_species ] = p_modelGUID
+-- e.g. channelDecisions["2 / A"].models.S1 = "<modelGUID>",
+-- .models.S2 = "<modelGUID>" once that channel's second species is
+-- also done -- so a channel with N deconvolved species accumulates N
+-- entries under "models" as each one's fit+save completes, independent
+-- of the others' timing. p_species is "S"+wavelength as US_2dsa builds
+-- it (e.g. "S1", "S2"), NOT the "N / X" channel form p_channel is.
+--
+-- ALEXEY: FIRST MODEL WINS, same rule and same reason as
+-- update_autoflowAnalysisVelMwl_channel_decision()'s header comment --
+-- this channel+species key, once recorded, is never overwritten by a
+-- later call here. Covers two cases: (1) two sessions racing to fit the
+-- same channel/species at once, and (2) a channel that gets re-run
+-- later (e.g. the first attempt fit S1 but crashed/was killed before
+-- reaching S2) -- on that later attempt, S1's already-recorded model
+-- stands even though US_2dsa will (currently) still re-fit and re-save
+-- S1 along with S2; only S2's fresh model actually gets recorded here,
+-- since S1's key is already taken. (If US_2dsa should also SKIP
+-- re-fitting a species whose model is already on record here, rather
+-- than just declining to overwrite the DB row, that's a separate,
+-- larger change to US_2dsa's own species-selection loop, not something
+-- this procedure can do by itself.) Same read-modify-write/locking
+-- shape as update_autoflowAnalysisVelMwl_channel_decision() above: the
+-- row is locked FOR UPDATE, the existing value at this exact channel+
+-- species path is read first, and JSON_SET only runs when that read
+-- comes back NULL. If no run-level row exists yet (should not normally
+-- happen -- this only ever follows a channel that already has an
+-- Accepted decision recorded, which always creates the row first), one
+-- is created inline rather than losing the model. Client side maps the
+-- QStringList {"update_autoflowAnalysisVelMwl_channel_2dsaModel",
+-- autoflowID, channel, species, modelGUID} onto this procedure's params
+-- (after personGUID/password, which US_DB2 prepends automatically).
+-- Deliberately read via US_DB2::query()+next(), NOT statusQuery() --
+-- like update_autoflowAnalysisVelMwl_channel_decision(), this procedure
+-- returns a second result set beyond the status one: newly_recorded
+-- (0/1), recorded_modelGUID -- the modelGUID now on record for this
+-- channel+species, whoever's it turned out to be -- so the caller can
+-- tell whether it won or lost the race and log accordingly, the same
+-- way US_MwlSpeciesFit::record_velmwl_channel_decision() does for
+-- decisions.
+DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_channel_2dsaModel$$
+CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_2dsaModel (
+                                                  p_personGUID     CHAR(36),
+                                                  p_password       VARCHAR(80),
+                                                  p_autoflowID     INT,
+                                                  p_channel        VARCHAR(20),
+                                                  p_species        VARCHAR(20),
+                                                  p_modelGUID      CHAR(36) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records   INT;
+  DECLARE json_path       VARCHAR(96);
+  DECLARE existing_modelG CHAR(36) DEFAULT NULL;
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET json_path = CONCAT( '$."', p_channel, '"."models"."', p_species, '"' );
+
+  START TRANSACTION;
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      -- Should not normally happen -- see header comment. Don't lose
+      -- the model if it does happen. Trivially not yet recorded.
+      INSERT INTO autoflowAnalysisVelMwl SET
+        autoflowID         = p_autoflowID,
+        channelDecisions   = JSON_OBJECT(),
+        channelDecisionsTs = NOW();
+
+    ELSE
+      SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) )
+      INTO       existing_modelG
+      FROM       autoflowAnalysisVelMwl
+      WHERE      autoflowID = p_autoflowID;
+
+    END IF;
+
+    IF ( existing_modelG IS NULL ) THEN
+      -- Nobody has recorded a model for this channel+species yet --
+      -- this call wins it.
+      UPDATE  autoflowAnalysisVelMwl
+      SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
+                                              json_path, p_modelGUID ),
+              channelDecisionsTs = NOW()
+      WHERE   autoflowID = p_autoflowID;
+
+    END IF;
+    -- else: already recorded (by this or another session, possibly a
+    -- prior, incomplete run of this same channel) -- leave it exactly
+    -- as recorded; the SELECT below reports that value back.
+
+  END IF;
+
+  COMMIT;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+  SELECT   ( existing_modelG IS NULL )                                AS newly_recorded,
+           JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) ) AS recorded_modelGUID
+  FROM     autoflowAnalysisVelMwl
+  WHERE    autoflowID = p_autoflowID;
+
+END$$
+
+
+-- ALEXEY: Read-side counterpart of update_autoflowAnalysisVelMwl_
+-- channel_2dsaModel() above -- looks up whether one deconvolved species
+-- (S1, S2, ...) already has a 2DSA-IT model recorded for it, within the
+-- run's autoflowAnalysisVelMwl row. Called from US_2dsa::
+-- species_model_already_recorded(), before run_2dsa_auto() fits each
+-- species, so a channel picked back up after a prior, incomplete run
+-- (e.g. one that fit S1 but crashed/was killed before reaching S2)
+-- doesn't waste a full 2DSA-IT grid fit re-doing a species that already
+-- finished and got recorded -- see update_autoflowAnalysisVelMwl_
+-- channel_2dsaModel()'s "first model wins" rule, which this exists to
+-- let the client check ahead of a fit rather than only find out about
+-- after wastefully re-fitting. Mirrors get_autoflowAnalysisVelMwl_
+-- channel_decision() above exactly, for "models"."<species>" instead of
+-- "decision". Client side maps the QStringList {"get_
+-- autoflowAnalysisVelMwl_channel_2dsaModel", autoflowID, channel,
+-- species} onto this procedure's params, then reads the modelGUID from
+-- column 0 of the (single) returned row via US_DB2::next()/value(0). If
+-- no run record exists yet, or this channel+species isn't in
+-- channelDecisions[channel].models yet (not fit yet -- including "not
+-- fit yet by this same, still-in-progress run", the common case), no
+-- rows are returned and @US3_LAST_ERRNO is set to @NO_AUTOFLOW_RECORD,
+-- same convention as get_autoflowAnalysisVelMwl_channel_decision().
+DROP PROCEDURE IF EXISTS get_autoflowAnalysisVelMwl_channel_2dsaModel$$
+CREATE PROCEDURE get_autoflowAnalysisVelMwl_channel_2dsaModel (
+                                                  p_personGUID  CHAR(36),
+                                                  p_password      VARCHAR(80),
+                                                  p_autoflowID    INT,
+                                                  p_channel       VARCHAR(20),
+                                                  p_species       VARCHAR(20) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE json_path VARCHAR(96);
+  DECLARE modelG_v  CHAR(36);
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SET json_path = CONCAT( '$."', p_channel, '"."models"."', p_species, '"' );
+
+  SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) )
+  INTO       modelG_v
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( modelG_v IS NULL ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no model recorded yet for this channel/species';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   modelG_v AS modelGUID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
 
 END$$
 
