@@ -3388,7 +3388,9 @@ CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_2dsaModel (
 BEGIN
   DECLARE count_records   INT;
   DECLARE json_path       VARCHAR(96);
+  DECLARE models_path     VARCHAR(64);
   DECLARE existing_modelG CHAR(36) DEFAULT NULL;
+  DECLARE new_decisions   LONGTEXT;
 
   DECLARE exit handler for sqlexception
    BEGIN
@@ -3399,7 +3401,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  SET json_path = CONCAT( '$."', p_channel, '"."models"."', p_species, '"' );
+  SET json_path   = CONCAT( '$."', p_channel, '"."models"."', p_species, '"' );
+  SET models_path = CONCAT( '$."', p_channel, '"."models"' );
 
   START TRANSACTION;
 
@@ -3417,20 +3420,39 @@ BEGIN
         channelDecisions   = JSON_OBJECT(),
         channelDecisionsTs = NOW();
 
-    ELSE
-      SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) )
-      INTO       existing_modelG
-      FROM       autoflowAnalysisVelMwl
-      WHERE      autoflowID = p_autoflowID;
+    END IF;
 
+    SELECT     channelDecisions,
+               JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) )
+    INTO       new_decisions, existing_modelG
+    FROM       autoflowAnalysisVelMwl
+    WHERE      autoflowID = p_autoflowID;
+
+    IF ( new_decisions IS NULL ) THEN
+      SET new_decisions = JSON_OBJECT();
     END IF;
 
     IF ( existing_modelG IS NULL ) THEN
       -- Nobody has recorded a model for this channel+species yet --
-      -- this call wins it.
+      -- this call wins it. JSON_SET() only auto-creates the LAST
+      -- missing path component, so "models" has to be created as its
+      -- own step the first time either species is recorded for this
+      -- channel -- a single JSON_SET() straight to ..."models".
+      -- "<species>" would silently no-op (two missing levels).
+      -- Do this via a session variable rather than nesting the calls:
+      -- passing COALESCE( JSON_EXTRACT(...), JSON_OBJECT() ) straight
+      -- in as JSON_SET()'s value argument loses the JSON typing of the
+      -- result (COALESCE doesn't propagate it), so the object gets
+      -- written back as an escaped JSON *string* instead of a nested
+      -- object -- getting more escaped on every subsequent call.
+      IF ( JSON_CONTAINS_PATH( new_decisions, 'one', models_path ) = 0 ) THEN
+        SET new_decisions = JSON_SET( new_decisions, models_path, JSON_OBJECT() );
+      END IF;
+
+      SET new_decisions = JSON_SET( new_decisions, json_path, p_modelGUID );
+
       UPDATE  autoflowAnalysisVelMwl
-      SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
-                                              json_path, p_modelGUID ),
+      SET     channelDecisions   = new_decisions,
               channelDecisionsTs = NOW()
       WHERE   autoflowID = p_autoflowID;
 
