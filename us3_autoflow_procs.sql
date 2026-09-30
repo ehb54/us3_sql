@@ -3654,7 +3654,8 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   channelDecisions, timestamp2UTC( channelDecisionsTs )
+      SELECT   channelDecisions, timestamp2UTC( channelDecisionsTs ),
+               speciesSelections, timestamp2UTC( speciesSelectionsTs )
       FROM     autoflowAnalysisVelMwl
       WHERE    autoflowID = p_autoflowID;
 
@@ -3811,6 +3812,57 @@ BEGIN
 
 END$$
 
+
+
+-- Record the per-channel species selection for the Report's Integration
+-- Results (VEL-MWL) -- called from US_Analysis_auto::
+-- finalize_velmwl_species_selection(), after every Approved channel's 2DSA-IT
+-- models are recorded, the user confirmed the selection dialog, and the
+-- run-wide transition was claimed via autoflow_velmwl_analysis_status().
+-- p_selectionsJson: { "2 / A": {"selected":["S1"],"available":["S1","S2"]}, ... }
+-- A channel missing from the object means "no selection recorded" -> the Report
+-- shows every species for it (same convention as ABDE's selected signals).
+-- Unlike the channel_decision / 2dsaModel writers this OVERWRITES (the user's
+-- confirmed choice is final), and touches only speciesSelections*, never
+-- channelDecisions.
+DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_species_selections$$
+CREATE PROCEDURE update_autoflowAnalysisVelMwl_species_selections (
+                                                  p_personGUID     CHAR(36),
+                                                  p_password       VARCHAR(80),
+                                                  p_autoflowID     INT,
+                                                  p_selectionsJson LONGTEXT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowAnalysisVelMwl
+      SET      speciesSelections   = p_selectionsJson,
+               speciesSelectionsTs = NOW()
+      WHERE    autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
 
 
 -- - Create record in the autoflowStatus table via LIVE_UPDATE's STOP Optima event--------------
@@ -4243,6 +4295,47 @@ END$$
 
 
 
+-- Update autoflowStatus record via analysisVelMwl
+DROP PROCEDURE IF EXISTS update_autoflowStatusAnalysisVelMwl_record$$
+CREATE PROCEDURE update_autoflowStatusAnalysisVelMwl_record ( p_personGUID    CHAR(36),
+                                                              p_password      VARCHAR(80),
+                                                              p_ID            INT,
+                                                              p_autoflowID    INT,
+                                                              p_velmwlJson    TEXT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowStatus
+  WHERE      ID = p_ID AND autoflowID = p_autoflowID;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NO_AUTOFLOW_RECORD;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+    ELSE
+      UPDATE   autoflowStatus
+      SET      analysisVelMwl  = p_velmwlJson, analysisVelMwlts = NOW()
+      WHERE    ID = p_ID AND autoflowID = p_autoflowID;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+
 -- Update autoflowStatus record via GMPreport
 DROP PROCEDURE IF EXISTS update_autoflowStatusReport_record$$
 CREATE PROCEDURE update_autoflowStatusReport_record ( p_personGUID    CHAR(36),
@@ -4498,7 +4591,8 @@ BEGIN
                editRI, timestamp2UTC( editRIts ), editIP, timestamp2UTC( editIPts ), analysis,
 	       stopOptima, timestamp2UTC( stopOptimats ), skipOptima, timestamp2UTC( skipOptimats ),
 	       analysisCancel, createdGMPrun, timestamp2UTC( createdGMPrunts ),
-	       analysisABDE, timestamp2UTC( analysisABDEts )
+	       analysisABDE, timestamp2UTC( analysisABDEts ),
+	       analysisVelMwl, timestamp2UTC( analysisVelMwlts )
       FROM     autoflowStatus 
       WHERE    ID = p_ID;
 

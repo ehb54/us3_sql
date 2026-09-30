@@ -304,6 +304,8 @@ CREATE TABLE autoflowStatus (
   createdGMPrunts   timestamp    NULL,
   analysisABDE      json,
   analysisABDEts    timestamp    NULL,
+  analysisVelMwl    json,
+  analysisVelMwlts  timestamp    NULL,
 
   PRIMARY KEY (ID) )
   ENGINE=InnoDB;
@@ -524,6 +526,13 @@ CREATE TABLE autoflowAnalysisVelMwl (
   autoflowID          int(11)      NOT NULL UNIQUE,
   channelDecisions    json,
   channelDecisionsTs  timestamp    NULL,
+  -- Species the user chose (at the ANALYSIS -> REPORT transition) to appear in
+  -- the Report's Integration Results, per channel, e.g.:
+  --   { "2 / A": { "selected":["S1"], "available":["S1","S2"] }, ... }
+  -- Kept in its OWN column (not inside channelDecisions) because every top-level
+  -- key of channelDecisions is treated as a channel by its readers.
+  speciesSelections   json,
+  speciesSelectionsTs timestamp    NULL,
 
   PRIMARY KEY (ID)
   ) ENGINE=InnoDB;
