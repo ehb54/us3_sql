@@ -31,11 +31,14 @@ BEGIN
   FROM   buffer
   WHERE  bufferID = p_bufferID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   bufferPerson
   WHERE  bufferID = p_bufferID
-  AND    personID = @US3_ID;
+  AND    personID = ( SELECT personID FROM people
+                      WHERE  personGUID = p_personGUID );
 
   IF ( count_buffers = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_BUFFER;

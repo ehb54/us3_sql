@@ -31,11 +31,14 @@ BEGIN
   FROM   experiment
   WHERE  experimentID = p_experimentID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   experimentPerson
   WHERE  experimentID = p_experimentID
-  AND    personID = @US3_ID;
+  AND    personID = ( SELECT personID FROM people
+                      WHERE  personGUID = p_personGUID );
 
   IF ( p_experimentID = 1 ) THEN    -- The magic ID that anyone can use temporarily
     SET count_experiments = 1;

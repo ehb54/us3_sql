@@ -31,10 +31,13 @@ BEGIN
   FROM   pcsa_modelrecs
   WHERE  mrecsID = p_mrecsID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   pcsa_modelrecs c, editedData e, rawData r, experimentPerson p
-  WHERE  p.personID     = @US3_ID
+  WHERE  p.personID     = ( SELECT personID FROM people
+                            WHERE  personGUID = p_personGUID )
   AND    r.experimentID = p.experimentID
   AND    e.rawDataID    = r.rawDataID
   AND    c.editedDataID = e.editedDataID;
