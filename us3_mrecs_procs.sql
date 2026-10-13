@@ -36,7 +36,8 @@ BEGIN
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   pcsa_modelrecs c, editedData e, rawData r, experimentPerson p
-  WHERE  p.personID     = ( SELECT personID FROM people
+  WHERE  c.mrecsID      = p_mrecsID
+  AND    p.personID     = ( SELECT personID FROM people
                             WHERE  personGUID = p_personGUID )
   AND    r.experimentID = p.experimentID
   AND    e.rawDataID    = r.rawDataID
