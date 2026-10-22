@@ -62,6 +62,7 @@ CREATE TABLE `people` (
 `username` varchar(80) DEFAULT NULL COMMENT 'Login username',
 `password` varchar(80) NOT NULL COMMENT 'Password hash',
 `activated` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Account activation status (0=inactive, 1=active)',
+`account_enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT 'Administrative enable flag (0=disabled, 1=enabled)',
 `signup` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Account creation timestamp',
 `lastLogin` datetime DEFAULT NULL COMMENT 'Most recent login timestamp',
 `userlevel` tinyint(4) NOT NULL DEFAULT '0' COMMENT 'Permission level (0=user, higher=admin)',
