@@ -31,12 +31,15 @@ BEGIN
   FROM   noise
   WHERE  noiseID = p_noiseID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   noise, modelPerson
   WHERE  noise.noiseID = p_noiseID
   AND    noise.modelID = modelPerson.modelID
-  AND    personID = @US3_ID;
+  AND    personID = ( SELECT personID FROM people
+                      WHERE  personGUID = p_personGUID );
 
   IF ( count_noise = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_NOISE;

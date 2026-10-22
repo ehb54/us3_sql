@@ -697,6 +697,7 @@ CREATE PROCEDURE delete_person ( p_personGUID     CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
