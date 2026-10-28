@@ -547,7 +547,53 @@ BEGIN
 
 END$$
 
+-- Returns the experimentID and runID of every experiment linked to the
+--  specified project, whoever owns the experiment
+DROP PROCEDURE IF EXISTS get_project_experiments$$
+CREATE PROCEDURE get_project_experiments ( p_personGUID  CHAR(36),
+                                           p_password    VARCHAR(80),
+                                           p_projectID   INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_linked INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) THEN
+
+    SELECT COUNT(*) INTO count_linked
+    FROM experiment
+    WHERE projectID = p_projectID;
+
+    IF ( count_linked = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   experimentID, runID
+      FROM     experiment
+      WHERE    projectID = p_projectID
+      ORDER BY runID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
 -- DELETEs an project, plus information in related tables
+--  Refuses while any experiment is linked to the project, since deleting
+--  the project would set projectID to NULL in all of those experiments
 DROP PROCEDURE IF EXISTS delete_project$$
 CREATE PROCEDURE delete_project ( p_personGUID  CHAR(36),
                                   p_password    VARCHAR(80),
@@ -555,17 +601,33 @@ CREATE PROCEDURE delete_project ( p_personGUID  CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE count_linked INT;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_project_permission( p_personGUID, p_password, p_projectID ) = @OK ) THEN
 
-    DELETE FROM projectPerson
+    -- Find out if any experiment is linked to this project first
+    SELECT COUNT(*) INTO count_linked
+    FROM experiment
     WHERE projectID = p_projectID;
 
-    DELETE FROM project
-    WHERE projectID = p_projectID;
+    IF ( count_linked = 0 ) THEN
+
+      DELETE FROM projectPerson
+      WHERE projectID = p_projectID;
+
+      DELETE FROM project
+      WHERE projectID = p_projectID;
+
+    ELSE
+      SET @US3_LAST_ERRNO = @PROJECT_IN_USE;
+      SET @US3_LAST_ERROR = CONCAT( 'The project is in use by ', count_linked,
+                                    ' experiment(s)' );
+
+    END IF;
 
   END IF;
 
