@@ -3209,7 +3209,14 @@ BEGIN
                                                             'decisionByID',   p_decisionByID,
                                                             'decisionByName', p_decisionByName,
                                                             'decisionTs',     NOW(),
-                                                            'filename',       p_filename ) ),
+                                                            'filename',       p_filename,
+                                                            -- prepDone: 1 = everything 2DSA-IT needs for this
+                                                            -- channel is in the DB. Rejected channels need nothing
+                                                            -- further (1 right away); an Accepted channel starts at
+                                                            -- 0 until US_Analysis_auto has finished the post-Accept
+                                                            -- Convert import + Edit profile save, and then flips it
+                                                            -- via update_..._channel_prepDone() below.
+                                                            'prepDone',       IF( p_decision = 'Accepted', 0, 1 ) ) ),
               channelDecisionsTs = NOW()
       WHERE   autoflowID = p_autoflowID;
 
@@ -3553,6 +3560,11 @@ END$$
 -- yet (not decided so far), no rows are returned and @US3_LAST_ERRNO
 -- is set to @NO_AUTOFLOW_RECORD, same convention as
 -- read_autoflowAnalysisABDE_record() above.
+-- (Extended) Second column prepDone: '1' if the channel's post-decision
+-- preparation (Convert import + Edit profile save) is complete, '0' if not.
+-- A record that has no prepDone key at all (written before this flag
+-- existed) is reported as '1' so older, already-processed runs are not
+-- needlessly redone. Existing callers that read only column 0 are unaffected.
 DROP PROCEDURE IF EXISTS get_autoflowAnalysisVelMwl_channel_decision$$
 CREATE PROCEDURE get_autoflowAnalysisVelMwl_channel_decision (
                                                   p_personGUID  CHAR(36),
@@ -3564,6 +3576,7 @@ CREATE PROCEDURE get_autoflowAnalysisVelMwl_channel_decision (
 BEGIN
   DECLARE json_path  VARCHAR(64);
   DECLARE decision_v VARCHAR(20);
+  DECLARE prep_v     VARCHAR(8);
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -3571,8 +3584,10 @@ BEGIN
 
   SET json_path = CONCAT( '$."', p_channel, '"."decision"' );
 
-  SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) )
-  INTO       decision_v
+  SELECT     JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, json_path ) ),
+             COALESCE( JSON_UNQUOTE( JSON_EXTRACT( channelDecisions,
+                         CONCAT( '$."', p_channel, '"."prepDone"' ) ) ), '1' )
+  INTO       decision_v, prep_v
   FROM       autoflowAnalysisVelMwl
   WHERE      autoflowID = p_autoflowID;
 
@@ -3586,7 +3601,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   decision_v AS decision;
+      SELECT   decision_v AS decision, prep_v AS prepDone;
 
     END IF;
 
@@ -3594,6 +3609,114 @@ BEGIN
     SELECT @US3_LAST_ERRNO AS status;
 
   END IF;
+
+END$$
+
+
+-- Marks one channel's post-Accept preparation (Convert import + Edit profile
+-- save) as complete. Called by US_Analysis_auto::velmwl_deconv_accepted()
+-- only after both have run. No-op if the channel has no entry yet.
+DROP PROCEDURE IF EXISTS update_autoflowAnalysisVelMwl_channel_prepDone$$
+CREATE PROCEDURE update_autoflowAnalysisVelMwl_channel_prepDone (
+                                                  p_personGUID     CHAR(36),
+                                                  p_password       VARCHAR(80),
+                                                  p_autoflowID     INT,
+                                                  p_channel        VARCHAR(20) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  START TRANSACTION;
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      -- JSON_SET on a path whose parent (the channel's object) does not
+      -- exist changes nothing, so this cannot create a stray entry.
+      UPDATE  autoflowAnalysisVelMwl
+      SET     channelDecisions   = JSON_SET( COALESCE( channelDecisions, JSON_OBJECT() ),
+                                              CONCAT( '$."', p_channel, '"."prepDone"' ), 1 ),
+              channelDecisionsTs = NOW()
+      WHERE   autoflowID = p_autoflowID;
+    END IF;
+  END IF;
+
+  COMMIT;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+
+-- Discards one channel's recorded decision, but ONLY if it is Accepted and
+-- its prepDone is 0 (i.e. a previous session stopped between recording the
+-- Accept and finishing Convert/Edit). Lets the channel be re-simulated and
+-- re-decided cleanly: update_..._channel_decision() is first-decision-wins,
+-- so without this the stale Accept (and its filename) would stick.
+-- A channel that is Rejected, or Accepted with prepDone = 1, is never touched.
+DROP PROCEDURE IF EXISTS reset_autoflowAnalysisVelMwl_channel_incomplete$$
+CREATE PROCEDURE reset_autoflowAnalysisVelMwl_channel_incomplete (
+                                                  p_personGUID     CHAR(36),
+                                                  p_password       VARCHAR(80),
+                                                  p_autoflowID     INT,
+                                                  p_channel        VARCHAR(20) )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_records INT;
+  DECLARE decision_v    VARCHAR(20) DEFAULT NULL;
+  DECLARE prep_v        VARCHAR(8)  DEFAULT NULL;
+
+  DECLARE exit handler for sqlexception
+   BEGIN
+    ROLLBACK;
+   END;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  START TRANSACTION;
+
+  SELECT     COUNT(*)
+  INTO       count_records
+  FROM       autoflowAnalysisVelMwl
+  WHERE      autoflowID = p_autoflowID FOR UPDATE;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_records > 0 ) THEN
+      SELECT   JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( '$."', p_channel, '"."decision"' ) ) ),
+               JSON_UNQUOTE( JSON_EXTRACT( channelDecisions, CONCAT( '$."', p_channel, '"."prepDone"' ) ) )
+      INTO     decision_v, prep_v
+      FROM     autoflowAnalysisVelMwl
+      WHERE    autoflowID = p_autoflowID;
+
+      IF ( decision_v = 'Accepted' AND prep_v = '0' ) THEN
+        UPDATE  autoflowAnalysisVelMwl
+        SET     channelDecisions   = JSON_REMOVE( channelDecisions, CONCAT( '$."', p_channel, '"' ) ),
+                channelDecisionsTs = NOW()
+        WHERE   autoflowID = p_autoflowID;
+      END IF;
+    END IF;
+  END IF;
+
+  COMMIT;
+
+  SELECT @US3_LAST_ERRNO AS status;
 
 END$$
 
