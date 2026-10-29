@@ -22,6 +22,7 @@ CREATE TABLE `analysis` (
 `cluster` varchar(64) DEFAULT NULL COMMENT 'Target cluster name',
 `metaschedulerClusterExecuting` varchar(64) DEFAULT NULL COMMENT 'Metascheduler cluster',
 `us3_db` varchar(32) DEFAULT NULL COMMENT 'Institution database name',
+`HPCAnalysisRequestID` int(11) DEFAULT NULL COMMENT 'Request in us3_db this job runs; fixes the job when two clusters reuse a gfacID',
 `autoflowAnalysisID` int(11) DEFAULT NULL COMMENT 'AutoFlow analysis ID if applicable',
 `stdout` longtext COMMENT 'Job standard output',
 `stderr` longtext COMMENT 'Job standard error output',
