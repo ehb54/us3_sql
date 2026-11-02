@@ -68,7 +68,10 @@ CREATE TABLE IF NOT EXISTS dispatch_event (
   toState varchar(24) NOT NULL,
   claimGeneration int(11) NOT NULL,
   reason text,
+  cluster varchar(64) DEFAULT NULL,
+  reasonCode varchar(32) DEFAULT NULL,
   createdAt datetime NOT NULL,
   PRIMARY KEY (eventID),
-  KEY request (dispatchRequestID)
+  KEY request (dispatchRequestID),
+  KEY code (reasonCode, createdAt)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Append-only dispatch state history';

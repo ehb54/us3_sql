@@ -1,4 +1,4 @@
--- Dispatch scheduler tables in gfac: controller claims, rotation state, turn events, decisions, alerts and heartbeats.
+-- Dispatch scheduler tables in gfac: controller claims, rotation state, decisions, alerts and heartbeats.
 -- The one definition: us3.sql, the upgrade migrations and new instances all load this file.
 -- CREATE TABLE IF NOT EXISTS only, so it is safe to run against a live database.
 
@@ -16,20 +16,6 @@ CREATE TABLE IF NOT EXISTS dispatch_rotation (
   updatedAt datetime NOT NULL,
   PRIMARY KEY (scopeKey)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Rotation state per instance, pool, group and policy version';
-
-CREATE TABLE IF NOT EXISTS dispatch_turn_event (
-  turnEventID int(11) NOT NULL AUTO_INCREMENT,
-  scopeKey varchar(191) NOT NULL,
-  unitKey varchar(191) NOT NULL,
-  member varchar(64) NOT NULL,
-  roundTotal int(11) NOT NULL,
-  attemptToken varchar(40) DEFAULT NULL,
-  status enum('PROVISIONAL','CONFIRMED','REFUNDED') NOT NULL DEFAULT 'PROVISIONAL',
-  createdAt datetime NOT NULL,
-  resolvedAt datetime DEFAULT NULL,
-  PRIMARY KEY (turnEventID),
-  UNIQUE KEY unit (scopeKey, unitKey)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='One turn per dispatch unit: spent, confirmed or refunded once';
 
 CREATE TABLE IF NOT EXISTS dispatch_decision (
   decisionID int(11) NOT NULL AUTO_INCREMENT,
