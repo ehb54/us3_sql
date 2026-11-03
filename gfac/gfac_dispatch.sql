@@ -1,5 +1,5 @@
 -- Dispatch scheduler tables in gfac: controller claims, rotation state, decisions, alerts and heartbeats.
--- The one definition: us3.sql, the upgrade migrations and new instances all load this file.
+-- The one definition: dbutils' uslims_upgrade.php loads this file into gfac (us3.sql is for instances).
 -- CREATE TABLE IF NOT EXISTS only, so it is safe to run against a live database.
 
 CREATE TABLE IF NOT EXISTS dispatch_controller_claim (
