@@ -22,6 +22,7 @@ CREATE TABLE `analysis` (
 `cluster` varchar(64) DEFAULT NULL COMMENT 'Target cluster name',
 `metaschedulerClusterExecuting` varchar(64) DEFAULT NULL COMMENT 'Metascheduler cluster',
 `us3_db` varchar(32) DEFAULT NULL COMMENT 'Institution database name',
+`HPCAnalysisRequestID` int(11) DEFAULT NULL COMMENT 'Request in us3_db this job runs; fixes the job when two clusters reuse a gfacID',
 `autoflowAnalysisID` int(11) DEFAULT NULL COMMENT 'AutoFlow analysis ID if applicable',
 `stdout` longtext COMMENT 'Job standard output',
 `stderr` longtext COMMENT 'Job standard error output',
@@ -47,6 +48,10 @@ CREATE TABLE `cluster_status` (
 PRIMARY KEY (`cluster`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci
   COMMENT='HPC cluster status and availability monitoring';
+
+-- metascheduler_decision and cluster_status_nudge belonged to the retired
+-- job-count selector and are no longer created. The dispatch tables are
+-- created by uslims_upgrade.php's 4.3.0 migrations.
 
 -- =====================================================================
 -- Table: queue_messages

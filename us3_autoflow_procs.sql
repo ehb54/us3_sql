@@ -4487,7 +4487,7 @@ BEGIN
 
     ELSE
       UPDATE   autoflowStatus
-      SET      GMPreport = p_IPJson, GMPreportts = NOW()
+      SET      GMPreport = p_reportJson, GMPreportts = NOW()
       WHERE    ID = p_ID AND autoflowID = p_autoflowID;
 
     END IF;
