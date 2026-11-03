@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS dispatch_attempt (
   resolvedAt datetime DEFAULT NULL,
   PRIMARY KEY (attemptID),
   UNIQUE KEY attemptToken (attemptToken),
-  UNIQUE KEY schedulerJob (cluster, schedulerJobID),
+  UNIQUE KEY schedulerJob (cluster, schedulerJobID, dispatchRequestID),
   KEY request (dispatchRequestID)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Submission attempts: intent before sbatch, then outcome';
 
