@@ -71,6 +71,7 @@ BEGIN
   SET @INSTRUMENT_IN_USE = 553;
   SET @PROTOCOL_IN_USE   = 554;
   SET @NO_AUTOFLOW_RECORD = 555;  
+  SET @PROJECT_IN_USE    = 556;
  
   -- Some user levels
   SET @US3_USER       = 0;
