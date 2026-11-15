@@ -33,11 +33,14 @@ BEGIN
   FROM   protocol
   WHERE  protocolID = p_protocolID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   protocolPerson
   WHERE  protocolID = p_protocolID
-  AND    personID = @US3_ID;
+  AND    personID = ( SELECT personID FROM people
+                      WHERE  personGUID = p_personGUID );
 
   IF ( count_protocols = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_PROTOCOL;

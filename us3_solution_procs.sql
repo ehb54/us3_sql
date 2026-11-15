@@ -33,11 +33,14 @@ BEGIN
   FROM   solution
   WHERE  solutionID = p_solutionID;
 
+  -- Take the caller from p_personGUID, which verify_user checks below.
+  --  @US3_ID is not set yet, and the session could have set it to anything
   SELECT COUNT(*)
   INTO   count_permissions
   FROM   solutionPerson
   WHERE  solutionID = p_solutionID
-  AND    personID = @US3_ID;
+  AND    personID = ( SELECT personID FROM people
+                      WHERE  personGUID = p_personGUID );
 
   IF ( count_solutions = 0 ) THEN
     SET @US3_LAST_ERRNO = @NO_SOLUTION;
