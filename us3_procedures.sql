@@ -13,7 +13,7 @@ CREATE PROCEDURE config()
 BEGIN
   SET @SQL_MODE       = 'traditional';
   SET @ADMIN_EMAIL    = 'dzollars@gmail.com';
-  SET @USERNAME       = LEFT( USER(), LOCATE( '@', USER() ) - 1 );
+  SET @USERNAME       = LEFT( USER(), CHAR_LENGTH( USER() ) - LOCATE( '@', REVERSE( USER() ) ) );
 
   SELECT timediff( UTC_TIMESTAMP(), CURRENT_TIMESTAMP() ) INTO @UTC_DIFF;
 
