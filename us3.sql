@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS people_audit (
   old_values         LONGTEXT NULL,
   new_values         LONGTEXT NULL,
   created_at         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at_utc     TINYINT(1) NOT NULL DEFAULT 0,
   notes              VARCHAR(255) NULL,
   PRIMARY KEY (auditID),
   INDEX idx_people_audit_person_time    (personID, created_at),
@@ -2472,6 +2473,9 @@ CREATE INDEX IF NOT EXISTS personal_access_tokens_tokenable_type_tokenable_id_in
 
 
 
+
+-- Dispatch scheduler tables (their one definition)
+SOURCE us3_dispatch.sql
 
 -- Load some non-changing hardware data
 SOURCE us3_hardware_data.sql
