@@ -1594,6 +1594,54 @@ BEGIN
 
 END$$
 
+-- SELECTs names of operators permitted to operate a specified instrument,
+--   restricted to people whose account is activated and enabled
+--   (same criteria as get_people_grev / get_people_gappr / get_people_gsme)
+DROP PROCEDURE IF EXISTS get_operator_names_active$$
+CREATE PROCEDURE get_operator_names_active ( p_personGUID   CHAR(36),
+                                             p_password     VARCHAR(80),
+                                             p_instrumentID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_operators INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_operators
+    FROM      permits m, people p
+    WHERE     m.instrumentID    = p_instrumentID
+    AND       m.personID        = p.personID
+    AND       p.activated       = 1
+    AND       p.account_enabled = 1;
+
+    IF ( count_operators = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   m.personID, p.personGUID, p.lname, p.fname
+      FROM     permits m, people p
+      WHERE    m.instrumentID    = p_instrumentID
+      AND      m.personID        = p.personID
+      AND      p.activated       = 1
+      AND      p.account_enabled = 1
+      ORDER BY p.lname, p.fname;
+
+    END IF;
+
+  END IF;
+
+END$$
+
 --
 -- Centerpiece procedures
 --
