@@ -347,6 +347,8 @@ BEGIN
 	       userlevel
       FROM     people
       WHERE    gmpReviewerRole = 'NONE'
+      AND      activated = 1
+      AND      account_enabled = 1
       ORDER BY lname;
 
     ELSE
@@ -361,6 +363,8 @@ BEGIN
 	       userlevel
       FROM     people
       WHERE    (gmpReviewerRole = 'NONE')
+      AND      activated = 1
+      AND      account_enabled = 1
       AND      (lname LIKE template OR fname LIKE template) 
       ORDER BY lname, fname;
     
